@@ -1,0 +1,5251 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--Edited using Gateway Setup Editor version GA3.0.14-130910 at 2014-01-07 11:16:03 by sforey on ITRSPC138-->
+<gateway compatibility="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://schema.itrsgroup.com/GA3.0.9-130327/gateway.xsd">
+	<probes>
+		<probe name="helpdeskTicketFlow_probe001">
+			<hostname>sherbet</hostname>
+			<port>9147</port>
+			<maxDatabaseConnections>100</maxDatabaseConnections>
+		</probe>
+		<probe name="helpdeskTicketFlow_probe002">
+			<hostname>sherbet</hostname>
+			<port>9148</port>
+			<maxDatabaseConnections>100</maxDatabaseConnections>
+		</probe>
+		<virtualProbe name="Logged in Virtual Probe"/>
+		<virtualProbe name="Gateway data"/>
+	</probes>
+	<managedEntities>
+		<managedEntityGroup name="Support">
+			<attribute name="Department">Support</attribute>
+			<managedEntityGroup name="Logged in Information">
+				<attribute name="Location">Global</attribute>
+				<attribute name="Type">Helpdesk</attribute>
+				<managedEntity name="Logged in Techs">
+					<probe ref="helpdeskTicketFlow_probe001"/>
+					<sampler ref="Logged in EMEA Techs "/>
+					<sampler ref="Logged in AMRS Techs "/>
+					<sampler ref="Logged in APAC Techs "/>
+					<sampler ref="Logged in Non Support"/>
+					<sampler ref="Time Zone"/>
+					<sampler ref="Staff Coverage and Experience"/>
+				</managedEntity>
+				<managedEntity name="Logged in Summary Stats">
+					<virtualProbe ref="Logged in Virtual Probe"/>
+					<sampler ref="Rotation Control"/>
+				</managedEntity>
+				<managedEntity name="Ticket Updates">
+					<probe ref="helpdeskTicketFlow_probe002"/>
+					<sampler ref="Last Updates"/>
+				</managedEntity>
+			</managedEntityGroup>
+			<managedEntityGroup name="Ticket flow">
+				<attribute name="Location">Global</attribute>
+				<attribute name="Type">Helpdesk</attribute>
+				<managedEntity name="Response and Age information">
+					<probe ref="helpdeskTicketFlow_probe001"/>
+					<sampler ref="Outside Agreed Response time"/>
+					<sampler ref="Oldest Ticket Info"/>
+					<sampler ref="Ticket Flow metrics"/>
+					<sampler ref="Without Estimated Effort"/>
+					<sampler ref="Without Note Time Set"/>
+					<sampler ref="Tickets assigend to inactive techs"/>
+				</managedEntity>
+				<managedEntity name="Dashboard metrics">
+					<probe ref="helpdeskTicketFlow_probe002"/>
+					<sampler ref="Dashboard Bar width controls"/>
+				</managedEntity>
+				<managedEntity name="Estimate Evaluation">
+					<probe ref="helpdeskTicketFlow_probe002"/>
+					<sampler ref="Estimate Accuracy"/>
+					<sampler ref="Estimates NOT IN -1 to 1"/>
+					<sampler ref="Summary of Grades"/>
+					<sampler ref="Reasons for inaccurate estimates"/>
+				</managedEntity>
+				<managedEntity name="Work Time and Velocity">
+					<probe ref="helpdeskTicketFlow_probe001"/>
+					<sampler ref="Work time last calander month"/>
+					<sampler ref="Ticket Flow Analysis"/>
+				</managedEntity>
+				<managedEntity disabled="true" name="Third Line Quality Review">
+					<probe ref="helpdeskTicketFlow_probe002"/>
+					<sampler ref="Third line quality review"/>
+				</managedEntity>
+			</managedEntityGroup>
+			<managedEntityGroup disabled="true" name="Coverage">
+				<attribute name="Location">Global</attribute>
+				<attribute name="Type">Knowledge Coverage</attribute>
+				<managedEntity name="Coverage">
+					<probe ref="helpdeskTicketFlow_probe002"/>
+					<sampler ref="Geneos Components"/>
+					<sampler ref="Tech Coverage"/>
+					<sampler disabled="true" ref="Topics"/>
+					<sampler disabled="true" ref="Certifications"/>
+				</managedEntity>
+			</managedEntityGroup>
+			<managedEntityGroup name="Regional Information">
+				<managedEntity name="Regional Information">
+					<probe ref="helpdeskTicketFlow_probe002"/>
+					<sampler ref="Regional Summary Information"/>
+					<sampler ref="Ticket Flow Through Regions"/>
+				</managedEntity>
+			</managedEntityGroup>
+			<managedEntityGroup name="Site Visits">
+				<managedEntity name="Helpdesk Centric Site Visits">
+					<probe ref="helpdeskTicketFlow_probe001"/>
+					<sampler ref="HelpdeskCentricSiteVisits"/>
+				</managedEntity>
+			</managedEntityGroup>
+		</managedEntityGroup>
+		<managedEntityGroup name="PEBl to Helpdesk link up">
+			<attribute name="Department">Global</attribute>
+			<attribute name="Location">Global</attribute>
+			<managedEntity name="PEBl to Helpdesk Link up">
+				<probe ref="helpdeskTicketFlow_probe002"/>
+				<sampler ref="PEBL to Helpdesk Feedback"/>
+				<sampler ref="PEBLs with no HD number"/>
+				<sampler ref="PEBL into Dev Helpdesk Feedback"/>
+				<sampler ref="Suggest Workarounds"/>
+			</managedEntity>
+		</managedEntityGroup>
+		<managedEntityGroup name="gateways">
+			<managedEntity name="Help Desk Ticket flow gateway">
+				<virtualProbe ref="Gateway data"/>
+				<sampler ref="HelpdeskCentricSiteVisits"/>
+			</managedEntity>
+		</managedEntityGroup>
+	</managedEntities>
+	<types/>
+	<samplers>
+		<samplerGroup name="Client time logging">
+			<sampler name="Client Location Time Logging">
+				<sampleInterval>
+					<data>86400</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Client Location Log</data>
+								</name>
+								<sql>
+									<data>
+SELECT L.LOCATION_ID,
+L.LOCATION_NAME,
+    
+	(SELECT COUNT(J.JOB_TICKET_ID) 
+	FROM  JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LL.LOCATION_ID = L.LOCATION_ID AND J.DELETED = 0
+    AND J.REPORT_DATE &gt; NOW() - INTERVAL 1 MONTH) AS Tickets_Raised,
+
+
+	(SELECT FORMAT(COALESCE(AVG(HOUR(TIMEDIFF(J.REPORT_DATE, J.FIRST_RESPONSE_DATE))),0),2)
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LL.LOCATION_ID = L.LOCATION_ID
+	AND J.DELETED = 0
+	AND J.REPORT_DATE &gt; NOW() - INTERVAL 1 MONTH) AS Average_Response_Time,
+
+
+	(SELECT COUNT(J.JOB_TICKET_ID)
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE  LL.LOCATION_ID = L.LOCATION_ID AND J.DELETED = 0
+	AND J.PRIORITY_TYPE_ID IN(1,2)
+	AND J.REPORT_DATE &gt; NOW() - INTERVAL 1 MONTH) AS Number_Of_P1_P2_Tickets,
+
+	(SELECT COUNT(J.JOB_TICKET_ID)
+	FROM STATUS_TYPE S,
+		JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LL.LOCATION_ID = L.LOCATION_ID AND J.STATUS_TYPE_ID = S.STATUS_TYPE_ID
+	AND S.STATUS_TYPE_ID NOT IN (1,7) AND J.DELETED = 0) AS Tickets_Closed,
+
+	(SELECT COALESCE(SUM(E.GRADE),0)
+	FROM ESTIMATENUMERICVALUELOOKUP E, STATUS_TYPE S,
+		JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	JOIN ticket_custom_field TCF ON TCF.ENTITY_ID = J.JOB_TICKET_ID
+	WHERE TCF.STRING_VALUE = E.ESTIMATEVALUE AND J.STATUS_TYPE_ID NOT IN(1,7)
+	AND LL.LOCATION_ID = L.LOCATION_ID AND J.STATUS_TYPE_ID = S.STATUS_TYPE_ID  AND J.DELETED = 0) 
+	AS Grades_Of_Ticket_Closed,
+
+	
+	(SELECT FORMAT(COALESCE(AVG((J.JOB_TIME)/60),0),2) 
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LL.LOCATION_ID = L.LOCATION_ID
+	AND J.DELETED = 0
+	AND J.STATUS_TYPE_ID NOT IN(1,7)
+	) AS Average_Resolution_Time,
+	
+
+	(SELECT COUNT(J.JOB_TICKET_ID) 
+	FROM 
+	JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LL.LOCATION_ID = L.LOCATION_ID
+	AND J.STATUS_TYPE_ID IN (1) AND J.DELETED = 0
+	) As Open_Tickets,
+
+	(SELECT COALESCE(SUM(E.GRADE),0) 
+	FROM  ESTIMATENUMERICVALUELOOKUP E, STATUS_TYPE S,
+	JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	JOIN ticket_custom_field TCF ON TCF.ENTITY_ID = J.JOB_TICKET_ID
+	WHERE TCF.STRING_VALUE = E.ESTIMATEVALUE AND J.STATUS_TYPE_ID IN(1)
+	AND LL.LOCATION_ID = L.LOCATION_ID AND J.STATUS_TYPE_ID = S.STATUS_TYPE_ID
+	AND J.DELETED = 0
+	) AS Grades_Of_Tickets_Opened,
+
+	(SELECT COUNT(J.JOB_TICKET_ID)
+	FROM 
+	JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LL.LOCATION_ID = L.LOCATION_ID
+	AND J.STATUS_TYPE_ID IN (7) AND J.DELETED = 0)  As Waiting_On_Client,
+
+	(SELECT COALESCE(SUM(E.GRADE),0) 
+	FROM  ESTIMATENUMERICVALUELOOKUP E, STATUS_TYPE S,
+	JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	JOIN ticket_custom_field TCF ON TCF.ENTITY_ID = J.JOB_TICKET_ID
+	WHERE TCF.STRING_VALUE = E.ESTIMATEVALUE AND J.STATUS_TYPE_ID IN(7)
+	AND LL.LOCATION_ID = L.LOCATION_ID AND J.STATUS_TYPE_ID = S.STATUS_TYPE_ID
+	AND J.DELETED = 0) AS Grades_Of_Tickets_Waiting_On_Client,
+
+	(SELECT COUNT(J.JOB_TICKET_ID)
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LL.LOCATION_ID = L.LOCATION_ID
+	AND j.STATUS_TYPE_ID IN (8,9,17) AND J.DELETED = 0
+	) AS Tickets_in_PEBL,
+
+	(SELECT COUNT(J.JOB_TICKET_ID)
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LL.LOCATION_ID = L.LOCATION_ID
+	AND J.STATUS_TYPE_ID IN (1,7) AND J.DELETED = 0
+	) AS Tickets_carried_Forward,
+
+	(SELECT COALESCE(SUM(E.GRADE),0)
+	FROM ESTIMATENUMERICVALUELOOKUP E, STATUS_TYPE S,
+	JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	JOIN ticket_custom_field TCF ON TCF.ENTITY_ID = J.JOB_TICKET_ID
+	WHERE TCF.STRING_VALUE = E.ESTIMATEVALUE AND J.STATUS_TYPE_ID IN(1,7)
+	AND LL.LOCATION_ID = L.LOCATION_ID AND J.STATUS_TYPE_ID = S.STATUS_TYPE_ID
+	AND J.DELETED = 0
+	) AS Grades_Of_Tickets_carried_forward
+FROM LOCATION L
+WHERE L.LOCATION_NAME IS NOT NULL;
+</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Client Location Time Logging"/>
+				</dataviews>
+			</sampler>
+			<sampler name="Client Location_Group Time Logging">
+				<sampleInterval>
+					<data>86400</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Client Location_Group Log</data>
+								</name>
+								<sql>
+									<data>
+SELECT LG.NAME, 
+     
+	(SELECT COUNT(J.JOB_TICKET_ID) 
+	FROM  
+	JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE  LG.ID = LL.GROUP_ID AND J.DELETED = 0
+	AND J.REPORT_DATE &gt; NOW() - INTERVAL 1 MONTH
+	) AS Tickets_Raised,
+
+	(SELECT FORMAT(COALESCE(AVG(HOUR(TIMEDIFF(J.REPORT_DATE, J.FIRST_RESPONSE_DATE))),0),2) 
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE  LG.ID = LL.GROUP_ID
+	AND J.DELETED = 0) AS Average_Respose_Time,
+
+	(SELECT COUNT(J.JOB_TICKET_ID)
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE   LG.ID = LL.GROUP_ID AND J.DELETED = 0
+	AND J.PRIORITY_TYPE_ID IN(1,2) ) AS Number_Of_P1_P2_Tickets,
+
+	(SELECT COUNT(J.JOB_TICKET_ID)
+	FROM STATUS_TYPE S,
+	JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE  LG.ID = LL.GROUP_ID AND J.STATUS_TYPE_ID = S.STATUS_TYPE_ID
+	AND S.STATUS_TYPE_ID NOT IN (1,7) AND J.DELETED = 0) AS Tickets_Closed,
+
+	(SELECT COALESCE(SUM(E.GRADE),0)
+	FROM ESTIMATENUMERICVALUELOOKUP E, STATUS_TYPE S, JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	JOIN ticket_custom_field TCF ON TCF.ENTITY_ID = J.JOB_TICKET_ID
+	WHERE TCF.STRING_VALUE = E.ESTIMATEVALUE AND J.STATUS_TYPE_ID NOT IN(1,7)
+	AND  LG.ID = LL.GROUP_ID AND J.STATUS_TYPE_ID = S.STATUS_TYPE_ID  AND J.DELETED = 0) AS Grades_Of_Ticket_Closed,
+
+	(SELECT FORMAT(COALESCE(AVG((J.JOB_TIME)/60),0),2) 
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LG.ID = LL.GROUP_ID
+	AND J.DELETED = 0) AS Average_Resolution_Time,
+
+	(SELECT COUNT(J.JOB_TICKET_ID) 
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LG.ID = LL.GROUP_ID
+	AND J.STATUS_TYPE_ID IN (1) AND J.DELETED = 0) As Open_Tickets,
+
+	(SELECT COALESCE(SUM(E.GRADE),0) 
+	FROM  ESTIMATENUMERICVALUELOOKUP E, STATUS_TYPE S,
+	JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	JOIN ticket_custom_field TCF ON TCF.ENTITY_ID = J.JOB_TICKET_ID
+	WHERE TCF.STRING_VALUE = E.ESTIMATEVALUE AND J.STATUS_TYPE_ID IN(1)
+	AND LG.ID = LL.GROUP_ID AND J.STATUS_TYPE_ID = S.STATUS_TYPE_ID
+	AND J.DELETED = 0) AS Grades_Of_Tickets_Opened,
+
+	(SELECT COUNT(J.JOB_TICKET_ID)
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE LG.ID = LL.GROUP_ID
+	AND J.STATUS_TYPE_ID IN (7) AND J.DELETED = 0)  As Waiting_On_Client,
+
+	(SELECT COALESCE(SUM(E.GRADE),0)
+	FROM  ESTIMATENUMERICVALUELOOKUP E, STATUS_TYPE S, JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	JOIN ticket_custom_field TCF ON TCF.ENTITY_ID = J.JOB_TICKET_ID
+	WHERE TCF.STRING_VALUE = E.ESTIMATEVALUE AND J.STATUS_TYPE_ID IN(7)
+	AND  LG.ID = LL.GROUP_ID AND J.STATUS_TYPE_ID = S.STATUS_TYPE_ID
+	AND J.DELETED = 0) AS Grades_Of_Tickets_Waiting_On_Client,
+
+	(SELECT COUNT(J.JOB_TICKET_ID)
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE  LG.ID = LL.GROUP_ID
+	AND j.STATUS_TYPE_ID IN (8,9,17) AND J.DELETED = 0) AS Tickets_in_PEBL,
+
+	(SELECT COUNT(J.JOB_TICKET_ID)
+	FROM JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	WHERE  LG.ID = LL.GROUP_ID
+	AND J.STATUS_TYPE_ID IN (1,7) AND J.DELETED = 0) AS Tickets_carried_Forward,
+
+	(SELECT COALESCE(SUM(E.GRADE),0)
+	FROM ESTIMATENUMERICVALUELOOKUP E, STATUS_TYPE S, JOB_TICKET J
+	JOIN LOCATION LL ON LL.LOCATION_ID = J.LOCATION_ID
+	JOIN ticket_custom_field TCF ON TCF.ENTITY_ID = J.JOB_TICKET_ID
+	WHERE TCF.STRING_VALUE = E.ESTIMATEVALUE AND J.STATUS_TYPE_ID IN(1,7)
+	AND  LG.ID = LL.GROUP_ID AND J.STATUS_TYPE_ID = S.STATUS_TYPE_ID
+	AND J.DELETED = 0) AS Grades_Of_Tickets_carried_forward
+
+
+FROM LOCATION_GROUP LG;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Client Location_Group Time Logging"/>
+				</dataviews>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="Coverage">
+			<sampler name="Geneos Components">
+				<sampleInterval>
+					<data>2000</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Geneos Components</data>
+								</name>
+								<sql>
+									<data>call sp_get_geneos_component_data();</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Geneos Components">
+						<additions>
+							<headlines>
+								<headline>Total Weighting</headline>
+								<headline>Overall live Coverage</headline>
+								<headline>EMEA Live Coverage</headline>
+								<headline>ARMS live Coverage</headline>
+								<headline>APAC Live Coverage</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Tech Coverage">
+				<sampleInterval>
+					<data>300</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Tech Coverage</data>
+								</name>
+								<sql>
+									<data>SELECT client_id AS &quot;ID&quot;,
+        CONCAT(first_name, &quot; &quot;, last_name) AS &quot;Name&quot;,
+
+        ((SELECT SUM(gc.usageWeighting * t.knowledgelevel) AS &quot;Coverage&quot; FROM tech_geneos_knowledge t
+          JOIN geneos_components gc ON t.geneosComponentID = gc.ID
+          WHERE t.techID = client_id) /
+
+        (SELECT SUM(usageWeighting) FROM geneos_components g)) * 100 AS &quot;Coverage&quot;
+
+FROM tech t
+WHERE deleted = 0;
+</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+			<sampler name="Topics">
+				<sampleInterval>
+					<data>2000</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Topics</data>
+								</name>
+								<sql>
+									<data>SELECT * FROM topic t;
+</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+			<sampler name="Certifications">
+				<sampleInterval>
+					<data>2000</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Certifications</data>
+								</name>
+								<sql>
+									<data>SELECT c.ID,
+       c.Name,
+       c.Description,
+       (SELECT COUNT(t.name) FROM certificationtopicgrade ctg2
+          JOIN Topic t ON ctg2.topicID = t.ID
+          WHERE CertificationID = c.ID) AS &quot;Number of Contributing Topics&quot;
+FROM certifications c</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="dashboard controls">
+			<sampler name="Rotation Control">
+				<sampleInterval>
+					<data>1</data>
+				</sampleInterval>
+				<dataviews>
+					<dataview name="Rotation Control">
+						<createOnGateway>
+							<enabled>true</enabled>
+							<firstColumn>Rotation</firstColumn>
+						</createOnGateway>
+						<additions>
+							<columns>
+								<column>value</column>
+							</columns>
+							<rows>
+								<row>EMEA</row>
+								<row>APAC</row>
+								<row>AMRS</row>
+								<row>APACreverse </row>
+								<row>London Support</row>
+								<row>New York Support</row>
+								<row>Hong Kong Support</row>
+								<row>Manila Support</row>
+								<row>Manila25</row>
+								<row>London Development</row>
+								<row>Manila Development</row>
+							</rows>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="Estimates">
+			<sampler name="Estimate Accuracy">
+				<sampleInterval>
+					<data>40000</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Estimate Accuracy</data>
+								</name>
+								<sql>
+									<data>
+
+SELECT DISTINCT J.JOB_TICKET_ID, 
+				CONCAT(C.FIRST_NAME, &quot; &quot; ,C.LAST_NAME) AS NAME, 
+				CONCAT(T.FIRST_NAME, &quot; &quot;, T.LAST_NAME) AS TECH_ASSIGNED,
+				W.TECH,
+				L.LOCATION_NAME, 
+				P.PROBLEM_TYPE_NAME AS &quot;Request Type&quot;,
+				J.SUBJECT, 
+				TCF.STRING_VALUE AS &quot;Estimate In Strings&quot;,
+				TCF1.STRING_VALUE AS &quot;Estimate Explanations&quot; ,
+				(SELECT MIN(Grade) FROM  ESTIMATENUMERICVALUELOOKUP EST
+					WHERE EST.LOWERBOUND  &lt; J.JOB_TIME AND EST.UPPERBOUND &gt; J.JOB_TIME) AS &quot;Actual Grade&quot;,
+				(SELECT MIN(Grade) FROM  ESTIMATENUMERICVALUELOOKUP EST
+					WHERE EST.LOWERBOUND  &lt; J.JOB_TIME AND EST.UPPERBOUND &gt; J.JOB_TIME) - E.GRADE AS &quot;Estimate Grade vs Actual Time&quot;,
+				J.JOB_TIME,
+				E.GRADE AS ESTIMATE 
+				
+FROM (SELECT GROUP_CONCAT(DISTINCT(CONCAT(TT.FIRST_NAME, &quot; &quot; ,TT.LAST_NAME)) SEPARATOR &apos;, &apos;) AS TECH, J2.JOB_TICKET_ID AS TICKET_ID
+              FROM TECH_NOTE TNI, JOB_TICKET J2, TECH TT
+			  WHERE TNI.TECHNICIAN_ID = TT.CLIENT_ID
+              AND J2.JOB_TICKET_ID = TNI.JOB_TICKET_ID GROUP BY J2.JOB_TICKET_ID) W, TECH T
+JOIN JOB_TICKET J ON J.ASSIGNED_TECH_ID = T.CLIENT_ID
+JOIN TECH_NOTE TI ON J.JOB_TICKET_ID = TI.JOB_TICKET_ID
+JOIN LOCATION L USING(LOCATION_ID)
+JOIN PROBLEM_TYPE P ON J.PROBLEM_TYPE_ID = P.PROBLEM_TYPE_ID
+JOIN TICKET_CUSTOM_FIELD TCF  ON TCF.DEFINITION_ID = 17 AND J.JOB_TICKET_ID = TCF.ENTITY_ID
+LEFT OUTER JOIN TICKET_CUSTOM_FIELD TCF1 ON TCF1.DEFINITION_ID = 19 AND J.JOB_TICKET_ID = TCF1.ENTITY_ID 
+JOIN ESTIMATENUMERICVALUELOOKUP E ON  TCF.STRING_VALUE = E.ESTIMATEVALUE
+JOIN Client C ON J.CLIENT_CREATOR_ID = C.Client_ID 
+WHERE J.REPORT_DATE &gt; NOW() - INTERVAL 60 day
+AND J.STATUS_TYPE_ID NOT IN (1,7,4)
+AND J.JOB_TICKET_ID = W.TICKET_ID
+AND  (SELECT MIN(Grade) FROM  ESTIMATENUMERICVALUELOOKUP EST
+		  WHERE EST.LOWERBOUND  &lt; J.JOB_TIME AND EST.UPPERBOUND &gt; J.JOB_TIME) - E.GRADE;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+						<showRowLine>true</showRowLine>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Estimate Accuracy">
+						<additions>
+							<headlines>
+								<headline>Average Estimate Differential </headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Summary of Grades">
+				<sampleInterval>
+					<data>41000</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Summary of Grades</data>
+								</name>
+								<sql>
+									<data>SELECT * FROM whd.myview;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+			<sampler name="Estimates NOT IN -1 to 1">
+				<sampleInterval>
+					<data>42000</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Estimates NOT IN -1 to 1</data>
+								</name>
+								<sql>
+									<data>SELECT DISTINCT J.JOB_TICKET_ID, J.JOB_TICKET_ID AS ID,
+				CONCAT(C.FIRST_NAME, &quot; &quot; ,C.LAST_NAME) AS NAME,
+				CONCAT(T.FIRST_NAME, &quot; &quot;, T.LAST_NAME) AS TECH_ASSIGNED,
+				W.TECH,
+				L.LOCATION_NAME, 
+				P.PROBLEM_TYPE_NAME AS &quot;Request Type&quot;,
+				J.SUBJECT,
+				TCF.STRING_VALUE AS &quot;Estimate In Strings&quot;,
+				TCF1.STRING_VALUE AS &quot;Estimate Explanations&quot; ,
+				(SELECT MIN(Grade) FROM  ESTIMATENUMERICVALUELOOKUP EST
+					WHERE EST.LOWERBOUND  &lt; J.JOB_TIME AND EST.UPPERBOUND &gt; J.JOB_TIME) AS &quot;Actual Grade&quot;,
+				(SELECT MIN(Grade) FROM  ESTIMATENUMERICVALUELOOKUP EST
+					WHERE EST.LOWERBOUND  &lt; J.JOB_TIME AND EST.UPPERBOUND &gt; J.JOB_TIME) - E.GRADE AS &quot;Estimate Grade vs Actual Time&quot;,
+				J.JOB_TIME,
+				E.GRADE AS ESTIMATE 
+				
+FROM (SELECT GROUP_CONCAT(DISTINCT(CONCAT(TT.FIRST_NAME, &quot; &quot; ,TT.LAST_NAME)) SEPARATOR &apos;, &apos;) AS TECH, J2.JOB_TICKET_ID AS TICKET_ID
+              FROM TECH_NOTE TNI, JOB_TICKET J2, TECH TT
+			  WHERE TNI.TECHNICIAN_ID = TT.CLIENT_ID
+              AND J2.JOB_TICKET_ID = TNI.JOB_TICKET_ID GROUP BY J2.JOB_TICKET_ID) W, TECH T
+JOIN JOB_TICKET J ON J.ASSIGNED_TECH_ID = T.CLIENT_ID
+JOIN TECH_NOTE TI ON J.JOB_TICKET_ID = TI.JOB_TICKET_ID
+JOIN LOCATION L USING(LOCATION_ID)
+JOIN PROBLEM_TYPE P ON J.PROBLEM_TYPE_ID = P.PROBLEM_TYPE_ID
+JOIN TICKET_CUSTOM_FIELD TCF  ON TCF.DEFINITION_ID = 17 AND J.JOB_TICKET_ID = TCF.ENTITY_ID
+LEFT OUTER JOIN TICKET_CUSTOM_FIELD TCF1 ON TCF1.DEFINITION_ID = 36 AND J.JOB_TICKET_ID = TCF1.ENTITY_ID AND TCF1.DELETED IS NULL
+JOIN ESTIMATENUMERICVALUELOOKUP E ON  TCF.STRING_VALUE = E.ESTIMATEVALUE
+JOIN Client C ON J.CLIENT_CREATOR_ID = C.Client_ID
+WHERE J.REPORT_DATE &gt; DATE(&apos;2013-10-01&apos;)
+AND J.JOB_TICKET_ID = W.TICKET_ID
+AND j.status_type_id not in (1,4,7,20)
+AND (SELECT MIN(Grade) FROM  ESTIMATENUMERICVALUELOOKUP EST
+		  WHERE EST.LOWERBOUND  &lt; J.JOB_TIME AND EST.UPPERBOUND &gt; J.JOB_TIME) - E.GRADE not IN (-1,0,1)
+AND  (SELECT MIN(Grade) FROM  ESTIMATENUMERICVALUELOOKUP EST
+		  WHERE EST.LOWERBOUND  &lt; J.JOB_TIME AND EST.UPPERBOUND &gt; J.JOB_TIME) - E.GRADE
+AND TCF1.STRING_VALUE IS NULL;
+</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Estimates NOT IN -1 to 1">
+						<additions>
+							<headlines>
+								<headline>Count</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Reasons for inaccurate estimates">
+				<sampleInterval>
+					<data>42000</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Reasons for inaccurate estimates</data>
+								</name>
+								<sql>
+									<data>SELECT string_value as &quot;Reason&quot;, COUNT(*) AS Frequency, CONVERT(GROUP_CONCAT(entity_id), CHAR) AS &quot;Tickets&quot; FROM ticket_custom_field t
+WHERE definition_id = 36
+AND NOT(string_value = &quot;&quot;)
+GROUP BY string_value
+ORDER BY COUNT(*) DESC;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="Logged in status">
+			<sampler name="Logged in EMEA Techs ">
+				<description>Logged in EMEA Techs </description>
+				<sampleInterval>
+					<data>20</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Logged in EMEA Techs</data>
+								</name>
+								<sql>
+									<data>SELECT DISTINCT t.client_id as &quot;ID&quot;, concat(&quot; &quot;, FIRST_NAME, &quot; &quot;,LAST_NAME) as &quot;Logged In&quot;
+FROM tech t
+JOIN active_session actsess ON t.client_id = actsess.tech_id
+WHERE BUSINESS_ZONE_ID = 1;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Logged in EMEA Techs">
+						<var-group>
+							<data>Login Status</data>
+						</var-group>
+						<additions>
+							<headlines>
+								<headline>Number Logged In</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Logged in AMRS Techs ">
+				<description>Logged in AMRS Techs </description>
+				<sampleInterval>
+					<data>20</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Logged in AMRS Techs</data>
+								</name>
+								<sql>
+									<data>SELECT DISTINCT t.client_id as &quot;ID&quot;, concat(&quot; &quot;, FIRST_NAME, &quot; &quot;,LAST_NAME) as &quot;Logged In&quot;
+FROM tech t
+JOIN active_session actsess ON t.client_id = actsess.tech_id
+WHERE BUSINESS_ZONE_ID = 2;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Logged in AMRS Techs">
+						<var-group>
+							<data>Login Status</data>
+						</var-group>
+						<additions>
+							<headlines>
+								<headline>Number Logged In</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Logged in APAC Techs ">
+				<description>Logged in APAC Techs </description>
+				<sampleInterval>
+					<data>20</data>
+				</sampleInterval>
+				<expectRows>
+					<data>
+						<expectRow>
+							<data/>
+						</expectRow>
+					</data>
+				</expectRows>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Logged in APAC Techs</data>
+								</name>
+								<sql>
+									<data>SELECT DISTINCT t.client_id as &quot;ID&quot;, concat(&quot; &quot;, FIRST_NAME, &quot; &quot;,LAST_NAME) as &quot;Logged In&quot;
+FROM tech t
+JOIN active_session actsess ON t.client_id = actsess.tech_id
+WHERE BUSINESS_ZONE_ID = 3;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Logged in APAC Techs">
+						<var-group>
+							<data>Login Status</data>
+						</var-group>
+						<additions>
+							<headlines>
+								<headline>Number Logged In</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Logged in Non Support">
+				<description>Logged in Non Support</description>
+				<sampleInterval>
+					<data>20</data>
+				</sampleInterval>
+				<expectRows>
+					<data>
+						<expectRow>
+							<data/>
+						</expectRow>
+					</data>
+				</expectRows>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Logged in Non Support</data>
+								</name>
+								<sql>
+									<data>SELECT DISTINCT t.client_id as &quot;ID&quot;, concat(&quot; &quot;, FIRST_NAME, &quot; &quot;,LAST_NAME) as &quot;Logged In&quot;
+FROM tech t
+JOIN active_session actsess ON t.client_id = actsess.tech_id
+WHERE BUSINESS_ZONE_ID = 4;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Logged in Non Support">
+						<var-group>
+							<data>Login Status</data>
+						</var-group>
+						<additions>
+							<headlines>
+								<headline>Number Logged In</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Logged in Summary">
+				<dataviews>
+					<dataview name="Summary Stats">
+						<createOnGateway>
+							<enabled>true</enabled>
+							<firstColumn>Attribute</firstColumn>
+						</createOnGateway>
+						<additions>
+							<columns>
+								<column>Value</column>
+							</columns>
+							<rows>
+								<row>Total Logged in Techs</row>
+							</rows>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="Month on Month client snapshot">
+			<sampler name="Client Open Tickets">
+				<description>Open Tickets</description>
+				<sampleInterval>
+					<data>600</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Open Tickets</data>
+								</name>
+								<sql>
+									<data>SELECT location_name, COUNT(job_ticket_id) AS &quot;Open Ticket Count&quot;  FROM location l
+JOIN job_ticket jt ON jt.location_id = l.location_id
+WHERE NOT l.deleted = 1
+AND jt.status_type_id IN (1,7,8,9,17)
+GROUP BY location_name
+ORDER BY COUNT(job_ticket_id) DESC;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+						<showRowLine>true</showRowLine>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="PEBL to Helpdesk Feedback">
+			<sampler name="PEBL to Helpdesk Feedback">
+				<sampleInterval>
+					<data>600</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>PEBL to Helpdesk Feedback</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_completed_PEBLs()</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>192.168.10.96</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>pebldb</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>sforey</data>
+							</var-userName>
+							<password>
+								<plaintext>itrsgroup</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+			<sampler name="PEBLs with no HD number">
+				<sampleInterval>
+					<data>300</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>With Client but no HD number</data>
+								</name>
+								<sql>
+									<data>SELECT ji.pkey,
+  COUNT(cfv.stringvalue) -1 AS &quot;Connected Client Count&quot;,
+  ROUND(LENGTH(STRIP_NON_DIGIT((SELECT cfvhd.Stringvalue FROM customfieldvalue cfvhd
+          WHERE cfvhd.issue = ji.ID AND cfvhd.customfield = 10021))) / 5) AS &quot;Connected Helpdesk tcikets&quot;,
+  GROUP_CONCAT(cfv.stringvalue) AS &quot;Connected Clients and tickets&quot;
+FROM customfieldvalue cfv
+JOIN jiraissue ji ON cfv.issue = ji.ID
+WHERE cfv.customfield IN (10018,10019,10020,10290,10021)
+AND ji.issuestatus NOT IN (10018,6)
+AND
+  NOT(
+    (SELECT
+    COUNT(cfv1.stringvalue)
+    FROM customfieldvalue cfv1
+    WHERE cfv1.customfield IN (10018,10019,10020,10290)
+    AND cfv1.issue = ji.ID) =
+    ROUND(LENGTH(STRIP_NON_DIGIT((SELECT cfvhd.Stringvalue FROM customfieldvalue cfvhd
+          WHERE cfvhd.issue = ji.ID AND cfvhd.customfield = 10021))) / 5))
+GROUP BY ji.ID</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>192.168.10.96</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>pebldb</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>sforey</data>
+							</var-userName>
+							<password>
+								<plaintext>itrsgroup</plaintext>
+							</password>
+						</connection>
+						<showHeadlines>false</showHeadlines>
+						<showRowLine>true</showRowLine>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="With Client but no HD number">
+						<additions>
+							<var-headlines>
+								<data>
+									<headline>
+										<data>Count</data>
+									</headline>
+								</data>
+							</var-headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="PEBL into Dev Helpdesk Feedback">
+				<sampleInterval>
+					<data>600</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>PEBL into Dev Helpdesk Feedback</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_PEBLs_going_into_development()</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>192.168.10.96</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>pebldb</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>sforey</data>
+							</var-userName>
+							<password>
+								<plaintext>itrsgroup</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+			<sampler name="Suggest Workarounds">
+				<sampleInterval>
+					<data>600</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Suggest Workarounds</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_PEBLs_with_suggested_workaround()</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>192.168.10.96</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>pebldb</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>sforey</data>
+							</var-userName>
+							<password>
+								<plaintext>itrsgroup</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="Regional Information">
+			<sampler name="Regional Summary Information">
+				<sampleInterval>
+					<data>60</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Ticket Flow metrics</data>
+								</name>
+								<sql>
+									<data>call sp_get_regional_stats();</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+			<sampler name="Ticket Flow Through Regions">
+				<sampleInterval>
+					<data>35</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Ticket Flow Through Regions</data>
+								</name>
+								<sql>
+									<data>call sp_get_global_ticket_flow();</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>Tickets  taken per Region</data>
+								</name>
+								<sql>
+									<data>SELECT  (SELECT bz.name FROM history_entry h
+       JOIN tech t ON t.client_id = h.tech_id
+       JOIN business_zone bz ON bz.id = t.business_zone_id
+       WHERE h.job_ticket_id = j.job_ticket_id
+       AND NOT(h.tech_id IS NULL)
+       LIMIT 1,1) AS &quot;Region&quot;,
+
+       COUNT(job_ticket_id) AS &quot;Tickets&quot;,
+       IF(COUNT(job_ticket_id) = 0, 0.1,1) AS &quot;Transparancy&quot;
+
+FROM job_ticket j
+WHERE j.report_date &gt; DATE_ADD(NOW(), INTERVAL -1 DAY)
+AND NOT(j.assigned_tech_id IS NULL)
+GROUP BY
+  (SELECT bz.name FROM history_entry h
+  JOIN tech t ON t.client_id = h.tech_id
+  JOIN business_zone bz ON bz.id = t.business_zone_id
+  WHERE h.job_ticket_id = j.job_ticket_id
+  AND NOT(h.tech_id IS NULL)
+  LIMIT 1,1)
+</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>Regional Attributes</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_regional_attributes();</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>London Support Alerts</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_regional_quality_issues(1);</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>New York Support Alerts</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_regional_quality_issues(2);</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>London Development Alerts</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_regional_quality_issues(9);</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>Manila Development Alerts</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_regional_quality_issues(8);</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>Manila25Alerts</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_regional_quality_issues(7);</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>Manila Support</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_regional_quality_issues(3);</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>Hong Kong Alerts</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_regional_quality_issues(6);</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>Global Alerts</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_regional_quality_issues(5);</data>
+								</sql>
+							</query>
+							<query>
+								<name>
+									<data>All Regions</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_regional_quality_issues(0);</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="London Support Alerts">
+						<additions>
+							<var-headlines>
+								<data>
+									<headline>
+										<data>Regional Alert level</data>
+									</headline>
+								</data>
+							</var-headlines>
+						</additions>
+					</dataview>
+					<dataview name="New York Support Alerts">
+						<additions>
+							<var-headlines>
+								<data>
+									<headline>
+										<data>Regional Alert level</data>
+									</headline>
+								</data>
+							</var-headlines>
+						</additions>
+					</dataview>
+					<dataview name="London Development Alerts">
+						<additions>
+							<var-headlines>
+								<data>
+									<headline>
+										<data>Regional Alert level</data>
+									</headline>
+								</data>
+							</var-headlines>
+						</additions>
+					</dataview>
+					<dataview name="Manila Development Alerts">
+						<additions>
+							<var-headlines>
+								<data>
+									<headline>
+										<data>Regional Alert level</data>
+									</headline>
+								</data>
+							</var-headlines>
+						</additions>
+					</dataview>
+					<dataview name="Manila25Alerts">
+						<additions>
+							<var-headlines>
+								<data>
+									<headline>
+										<data>Regional Alert level</data>
+									</headline>
+								</data>
+							</var-headlines>
+						</additions>
+					</dataview>
+					<dataview name="Manila Support">
+						<additions>
+							<var-headlines>
+								<data>
+									<headline>
+										<data>Regional Alert level</data>
+									</headline>
+								</data>
+							</var-headlines>
+						</additions>
+					</dataview>
+					<dataview name="Hong Kong Alerts">
+						<additions>
+							<var-headlines>
+								<data>
+									<headline>
+										<data>Regional Alert level</data>
+									</headline>
+								</data>
+							</var-headlines>
+						</additions>
+					</dataview>
+					<dataview name="Global Alerts">
+						<additions>
+							<var-headlines>
+								<data>
+									<headline>
+										<data>Regional Alert level</data>
+									</headline>
+								</data>
+							</var-headlines>
+						</additions>
+					</dataview>
+					<dataview name="All Regions">
+						<additions>
+							<var-headlines>
+								<data>
+									<headline>
+										<data>Regional Alert level</data>
+									</headline>
+								</data>
+							</var-headlines>
+						</additions>
+					</dataview>
+					<dataview name="Regional Attributes">
+						<additions>
+							<var-rows>
+								<data>
+									<row>
+										<data>Total</data>
+									</row>
+								</data>
+							</var-rows>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="Staffing Cover">
+			<sampler name="Time Zone">
+				<sampleInterval>
+					<data>600</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Staffing Cover</data>
+								</name>
+								<sql>
+									<data>call sp_get_staffing_cover();</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+			<sampler name="Staff Coverage and Experience">
+				<sampleInterval>
+					<data>600</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Staff Coverage and Experience</data>
+								</name>
+								<sql>
+									<data>call sp_get_staff_coverage();</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>192.168.10.111</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>supportsrv</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>geneos</data>
+							</var-userName>
+							<password>
+								<plaintext>netagent</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Europe Site Visits">
+						<var-group>
+							<data>Site Visits</data>
+						</var-group>
+						<additions>
+							<headlines>
+								<headline>Unplanned Overdue Site Visits</headline>
+								<headline>Planned Overdue Site Visits</headline>
+								<headline>Upcoming Site Visits</headline>
+								<headline>Up to date</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Dashboard Bar width controls">
+				<sampleInterval>
+					<data>600</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Dashboard Bar width controls</data>
+								</name>
+								<sql>
+									<data>call sp_get_bar_width_data();</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="Ticket Flow">
+			<sampler name="Outside Agreed Response time">
+				<description>Outside Agreed Response time</description>
+				<sampleInterval>
+					<data>300</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Outside Agreed Response time</data>
+								</name>
+								<sql>
+									<data>SELECT JOB_TICKET_ID as &quot;Ticket Nuber&quot;, SUBJECT as &quot;Subject&quot;, concat(t.FIRST_NAME, &quot; &quot;, LAST_NAME) AS &quot;Name&quot; FROM job_ticket j
+LEFT OUTER JOIN tech t ON t.client_id = j.ASSIGNED_TECH_ID
+WHERE REPORT_DATE &lt; DATE_ADD(now(), INTERVAL -20 MINUTE)
+  AND ISNULL(FIRST_RESPONSE_DATE)
+  AND j.STATUS_TYPE_ID IN (1,15)
+  AND j.DELETED = 0;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Outside Agreed Response time">
+						<var-group>
+							<data/>
+						</var-group>
+						<additions>
+							<headlines>
+								<headline>Total</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Ticket Flow metrics">
+				<sampleInterval>
+					<data>300</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Ticket Flow metrics</data>
+								</name>
+								<sql>
+									<data>call sp_get_ticket_count();</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Ticket Flow metrics">
+						<additions>
+							
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Oldest Ticket Info">
+				<sampleInterval>
+					<data>600</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Oldest Ticket Info</data>
+								</name>
+								<sql>
+									<data>call sp_get_oldest_ticket_info();</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+			<sampler name="Last Updates">
+				<sampleInterval>
+					<data>20</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Last Updates</data>
+								</name>
+								<sql>
+									<data>call sp_get_latest_ticket_updates();</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+			<sampler name="Without Estimated Effort">
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Without Estimated Effort</data>
+								</name>
+								<sql>
+									<data>SELECT`Ticket ID`,  Name AS Assignee, Subject,`Date Created` FROM(SELECT DISTINCT tcf.ENTITY_ID, j.REPORT_DATE AS &apos;Date Created&apos;, j.JOB_TICKET_ID AS &apos;Ticket ID&apos;, SUBJECT as &quot;Subject&quot;,
+(SELECT tcf.STRING_VALUE FROM ticket_custom_field tcf WHERE tcf.DEFINITION_ID=17
+AND tcf.ENTITY_ID = j.JOB_TICKET_ID LIMIT 1) As &apos;Estimated Effort to Complete&apos;,
+(SELECT concat(t.FIRST_NAME, &quot; &quot;, LAST_NAME)  FROM tech t WHERE t.client_id = j.ASSIGNED_TECH_ID LIMIT 1) AS &quot;Name&quot;
+FROM ticket_custom_field tcf
+RIGHT OUTER JOIN job_ticket j ON tcf.ENTITY_ID = j.JOB_TICKET_ID
+WHERE j.REPORT_DATE &gt; &apos;2012-06-19&apos;
+AND j.DELETED = 0) as x
+WHERE `Estimated Effort to Complete` IS NULL
+AND `Name` IS NOT NULL
+;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Without Estimated Effort">
+						<additions>
+							<headlines>
+								<headline>Count</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Without Note Time Set">
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Without Note Time Set</data>
+								</name>
+								<sql>
+									<data>SELECT tn.TECH_NOTE_ID AS `Note ID`,tn.CREATION_DATE AS `Note Creation Date`,tn.JOB_TICKET_ID AS `Ticket Number`,
+(SELECT concat(t.FIRST_NAME, &quot; &quot;, LAST_NAME)  FROM tech t WHERE t.client_id = tn.TECHNICIAN_ID) AS &quot;Note Creator&quot;,
+(SELECT REPLACE(REPLACE(REPLACE(note_text,&apos;\n&apos;,&apos; &apos;),CHAR(13),&apos; &apos;),CHAR(10),&apos; &apos;)LIMIT 1,1) AS `Note Text`
+FROM tech_note tn, JOB_TICKET jt
+WHERE BILLING_MINUTES IS NULL
+AND jt.JOB_TICKET_ID = tn.JOB_TICKET_ID
+AND tn.JOB_TICKET_ID IS NOT NULL
+AND NOT jt.DELETED = 1
+AND CREATION_DATE &gt; &apos;2012-07-01&apos;;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Without Note Time Set">
+						<additions>
+							<headlines>
+								<headline>Count</headline>
+								<headline>Combined Count</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Third line quality review">
+				<sampleInterval>
+					<data>43500</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Third line quality review</data>
+								</name>
+								<sql>
+									<data>
+SELECT J.JOB_TICKET_ID AS Ticket_Number,
+S.STATUS_TYPE_NAME AS Status,
+CONCAT(T.FIRST_NAME, &quot; &quot;, T.LAST_NAME) AS Assigned_Tech ,
+W.TECH,
+L.LOCATION_NAME  AS Location,
+J.SUBJECT AS Subject
+FROM (SELECT GROUP_CONCAT(DISTINCT(CONCAT(TT.FIRST_NAME, &quot; &quot; ,TT.LAST_NAME)) SEPARATOR &apos;, &apos;) AS TECH,
+      J2.JOB_TICKET_ID AS TICKET_ID
+      FROM TECH_NOTE TNI, JOB_TICKET J2, TECH TT
+      WHERE TNI.TECHNICIAN_ID = TT.CLIENT_ID
+         AND TT.BUSINESS_ZONE_ID IN (4)
+         AND J2.JOB_TICKET_ID = TNI.JOB_TICKET_ID
+         GROUP BY J2.JOB_TICKET_ID ) W,
+STATUS_TYPE S,TECH T
+JOIN JOB_TICKET J ON J.ASSIGNED_TECH_ID = T.CLIENT_ID
+JOIN LOCATION L ON L.LOCATION_ID = J.LOCATION_ID
+WHERE J.STATUS_TYPE_ID = S.STATUS_TYPE_ID
+  AND J.STATUS_TYPE_ID NOT IN(1,7)
+  AND J.REPORT_DATE BETWEEN DATE_FORMAT(NOW() - INTERVAL 1 MONTH, &apos;%Y-%m-01&apos;)
+  AND DATE_FORMAT(NOW(),&apos;%Y-%m-01&apos; ) 
+  AND J.JOB_TICKET_ID = W.TICKET_ID
+;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Third line quality review">
+						<additions>
+							<headlines>
+								<headline>Count</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Ticket Flow Analysis">
+				<sampleInterval>
+					<data>20</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Ticket Flow Analysis</data>
+								</name>
+								<sql>
+									<data>CALL sp_get_ticket_flow_analysis();</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Ticket Flow Analysis">
+						<additions>
+							<headlines>
+								<headline>Total Open Grades</headline>
+								<headline>24 hours productvity vs opened</headline>
+								<headline>1 week productvity vs opened</headline>
+								<headline>1 month productvity vs opened</headline>
+								<headline>UnasignedAlerts</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+			<sampler name="Tickets assigend to inactive techs">
+				<description/>
+				<sampleInterval>
+					<data>300</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Tickets with inactive techs</data>
+								</name>
+								<sql>
+									<data>SELECT job_ticket_id AS &quot;ID&quot;, job_ticket_id AS &quot;Number&quot;, CONCAT(t.first_name, &quot; &quot;, t.last_name) AS &quot;Tech&quot;, Question_text AS &quot;Summary&quot;, st.status_type_name AS &quot;Status&quot; FROM job_ticket j
+LEFT OUTER JOIN tech t ON t.client_id = j.assigned_tech_id
+JOIN status_type st ON st.status_type_id = j.status_type_id
+WHERE (NOT(t.inactive = 0) OR t.deleted = 1 OR on_vacation = 1)
+AND j.status_type_id IN (1)
+AND j.deleted = 0</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Tickets with inactive techs">
+						<additions>
+							<headlines>
+								<headline>Count</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="Velocity and Completion times">
+			<sampler name="Work time last calander month">
+				<sampleInterval>
+					<data>43200</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>Ticket work times</data>
+								</name>
+								<sql>
+									<data>SELECT J.JOB_TICKET_ID AS Ticket_Number , S.STATUS_TYPE_NAME AS Status,
+CONCAT(T.FIRST_NAME, &quot; &quot;, T.LAST_NAME) AS Assigned_Tech,
+CONCAT(C.FIRST_NAME, &quot; &quot; ,C.LAST_NAME) AS Client_Name,
+L.LOCATION_NAME  AS Location,
+J.SUBJECT AS Subject,
+J.REPORT_DATE AS Report_Date,
+(MAX(HOUR(TIMEDIFF(J.REPORT_DATE, E.ENTRY_DATE)))) AS &quot;Elapsed Time To Complete (hours)&quot;, 
+FLOOR(J.JOB_TIME/60) AS &quot;ITRS Work Time To Complete (Hours)&quot;
+FROM  STATUS_TYPE S, TECH T
+JOIN JOB_TICKET J ON J.ASSIGNED_TECH_ID = T.CLIENT_ID
+JOIN Client C ON J.CLIENT_CREATOR_ID = C.Client_ID
+JOIN LOCATION L ON L.LOCATION_ID = J.LOCATION_ID
+JOIN HISTORY_ENTRY E ON E.JOB_TICKET_ID = J.JOB_TICKET_ID
+WHERE J.STATUS_TYPE_ID = S.STATUS_TYPE_ID AND J.STATUS_TYPE_ID NOT IN(1,7)
+AND J.REPORT_DATE BETWEEN DATE_FORMAT(NOW() - INTERVAL 1 MONTH, &apos;%Y-%m-01&apos;)
+AND DATE_FORMAT(NOW(),&apos;%Y-%m-01&apos; ) 
+GROUP BY J.JOB_TICKET_ID
+;</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+				<dataviews>
+					<dataview name="Ticket work times">
+						<var-group>
+							<data>Last Month</data>
+						</var-group>
+						<additions>
+							<headlines>
+								<headline>Average ITRS Work time</headline>
+								<headline>Average Elapsed time</headline>
+							</headlines>
+						</additions>
+					</dataview>
+				</dataviews>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="Site Visits">
+			<sampler name="HelpdeskCentricSiteVisits">
+				<sampleInterval>
+					<data>300</data>
+				</sampleInterval>
+				<plugin>
+					<sql-toolkit>
+						<queries>
+							<query>
+								<name>
+									<data>HelpdeskCentricSiteVisits</data>
+								</name>
+								<sql>
+									<data>SELECT 	location_name,
+		bz.name AS &quot;Region&quot;,
+		l.city AS &quot;City&quot;,
+		l.country AS &quot;Country&quot;,
+		lcf1.time_value AS &quot;Last Visit&quot;,
+		lcf2.string_value AS &quot;Frequency&quot;,
+		CONVERT(lcf2.string_value, UNSIGNED INTEGER) AS &quot;Frequency in Weeks&quot;,
+		DATE_ADD(lcf1.time_value, INTERVAL CONVERT(lcf2.string_value, UNSIGNED INTEGER) WEEK) AS &quot;Next proposed Visit&quot;,
+		DATEDIFF(DATE_ADD(lcf1.time_value, INTERVAL CONVERT(lcf2.string_value, UNSIGNED INTEGER) WEEK), NOW()) AS &quot;Days to go&quot;,
+		lcf3.string_value AS &quot;Primary Contact&quot;,
+		lcf4.string_value AS &quot;Primary Geneos Use&quot;,
+		lcf5.string_value AS &quot;Business Function&quot;,
+		l.note AS &quot;Notes&quot;
+FROM location l
+LEFT OUTER JOIN business_zone bz ON l.business_zone_id = bz.id
+LEFT OUTER JOIN location_custom_field lcf1 ON lcf1.entity_id = l.location_id AND lcf1.definition_id = 38
+LEFT OUTER JOIN location_custom_field lcf2 ON lcf2.entity_id = l.location_id AND lcf2.definition_id = 37
+LEFT OUTER JOIN location_custom_field lcf3 ON lcf3.entity_id = l.location_id AND lcf3.definition_id = 39
+LEFT OUTER JOIN location_custom_field lcf4 ON lcf4.entity_id = l.location_id AND lcf4.definition_id = 41
+LEFT OUTER JOIN location_custom_field lcf5 ON lcf5.entity_id = l.location_id AND lcf5.definition_id = 42
+WHERE (NOT(l.deleted = 1) OR l.deleted IS NULL)
+AND (NOT(l.inactive = 1) OR l.inactive IS NULL)</data>
+								</sql>
+							</query>
+						</queries>
+						<connection>
+							<database>
+								<mysql>
+									<var-serverName>
+										<data>helpdesk.itrsgroup.com</data>
+									</var-serverName>
+									<var-databaseName>
+										<data>whd</data>
+									</var-databaseName>
+								</mysql>
+							</database>
+							<var-userName>
+								<data>whd</data>
+							</var-userName>
+							<password>
+								<plaintext>itrshelp</plaintext>
+							</password>
+						</connection>
+					</sql-toolkit>
+				</plugin>
+			</sampler>
+		</samplerGroup>
+		<samplerGroup name="gateway Plugins">
+			<sampler name="License information">
+				<plugin>
+					<Gateway-licenceUsage>
+						<groups/>
+					</Gateway-licenceUsage>
+				</plugin>
+			</sampler>
+		</samplerGroup>
+	</samplers>
+	<actions>
+		<fireOnComponentStartup>false</fireOnComponentStartup>
+		<fireOnConfigurationChange>false</fireOnConfigurationChange>
+		<fireOnCreateWithOkSeverity>true</fireOnCreateWithOkSeverity>
+		<action name="Send Mail from PEBL to Helpdesk">
+			<sharedLibrary>
+				<libraryFile>/support/geneos/gateway/packages/GA2011.2.1-110923/lib/libemail.so</libraryFile>
+				<functionName>SendMail</functionName>
+				<runThreaded>false</runThreaded>
+				<staticParameters>
+					<staticParameter>
+						<name>_SMTP_SERVER</name>
+						<value>
+							<data>192.168.10.87</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>_FROM</name>
+						<value>
+							<data>clientuser@itrsgroup.com</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>_FROM_NAME</name>
+						<value>
+							<data>clientuser@itrsgroup.com</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>_SUBJECT</name>
+						<value>
+							<data>%(_VALUE)</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>_ALERT_FORMAT</name>
+						<value>
+							<data>*** This is an auto generated</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>MSG_CRITICAL</name>
+						<value>
+							<data>CRITICAL</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>MSG_WARNING</name>
+						<value>
+							<data>WARNING</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>MSG_OK</name>
+						<value>
+							<data>RESOLVED</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>_TO</name>
+						<value>
+							<data>helpdesk@itrsgroup.com</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>_TO_INFO_TYPE</name>
+						<value>
+							<data>Email</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>_SMTP_PORT</name>
+						<value>
+							<data>25</data>
+						</value>
+					</staticParameter>
+					<staticParameter>
+						<name>_FORMAT</name>
+						<value>
+							<data>%(_ConnectingMailMessage)</data>
+						</value>
+					</staticParameter>
+				</staticParameters>
+			</sharedLibrary>
+		</action>
+		<action name="Mark Mail Sent">
+			<script>
+				<exeFile>./sendLinkUpMail.sh</exeFile>
+				<arguments>
+					<data/>
+				</arguments>
+				<runLocation>gateway</runLocation>
+			</script>
+		</action>
+	</actions>
+	<commands>
+		<commandGroup name="Coverage">
+			<command name="Add Component">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/rows/row/cell</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]</target>
+				</targets>
+				<userCommand>
+					<type>script</type>
+					<runLocation>netprobe</runLocation>
+					<args>
+						<arg>
+							<static>../../netprobe_scripts/add_component.sh</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<userInput>
+								<description>Project Name</description>
+								<singleLineString>&lt;Project Name&gt;</singleLineString>
+							</userInput>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<userInput>
+								<description>Component Name</description>
+								<singleLineString>&lt;Component Name&gt;</singleLineString>
+							</userInput>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<userInput>
+								<description>Usage Weighting (0-1)</description>
+								<float>1.0</float>
+							</userInput>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+					</args>
+					<enablePassword>false</enablePassword>
+				</userCommand>
+			</command>
+			<command name="Remove Component">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/rows/row/cell</target>
+				</targets>
+				<userCommand>
+					<type>script</type>
+					<runLocation>netprobe</runLocation>
+					<args>
+						<arg>
+							<static>../../netprobe_scripts/remove_component.sh</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<xpath>@rowname</xpath>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<userInput>
+								<description>Confirm</description>
+								<boolean>true</boolean>
+							</userInput>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+					</args>
+					<enablePassword>false</enablePassword>
+				</userCommand>
+			</command>
+			<command name="Change Weighting">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/rows/row/cell</target>
+				</targets>
+				<userCommand>
+					<type>script</type>
+					<runLocation>netprobe</runLocation>
+					<args>
+						<arg>
+							<static>../../netprobe_scripts/change_component_weighting.sh</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<xpath>@rowname</xpath>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<userInput>
+								<description>New Weighting</description>
+								<float>1.0</float>
+							</userInput>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+					</args>
+					<enablePassword>false</enablePassword>
+				</userCommand>
+			</command>
+			<command name="Add Tech to component">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/rows/row/cell</target>
+				</targets>
+				<userCommand>
+					<type>script</type>
+					<runLocation>netprobe</runLocation>
+					<args>
+						<arg>
+							<static>../../netprobe_scripts/add_tech_to_Component.sh</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<xpath>@rowname</xpath>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<userInput>
+								<description>Tech</description>
+								<options>
+									<option>
+										<label>Andras Kecskes</label>
+										<value>24</value>
+									</option>
+									<option>
+										<label>Andrew Page</label>
+										<value>45</value>
+									</option>
+									<option>
+										<label>Ann Yap</label>
+										<value>54</value>
+									</option>
+									<option>
+										<label>Chris Banat</label>
+										<value>13</value>
+									</option>
+									<option>
+										<label>Christopher Alexander</label>
+										<value>48</value>
+									</option>
+									<option>
+										<label>Claus Nielsen</label>
+										<value>51</value>
+									</option>
+									<option>
+										<label>Crystal Lam</label>
+										<value>62</value>
+									</option>
+									<option>
+										<label>Dave Curnow</label>
+										<value>3</value>
+									</option>
+									<option>
+										<label>David Miller</label>
+										<value>18</value>
+									</option>
+									<option>
+										<label>David Randall</label>
+										<value>41</value>
+									</option>
+									<option>
+										<label>Derek Li</label>
+										<value>47</value>
+									</option>
+									<option>
+										<label>Development Global</label>
+										<value>37</value>
+									</option>
+									<option>
+										<label>Edu Morales</label>
+										<value>9</value>
+									</option>
+									<option>
+										<label>Ethan Allen</label>
+										<value>53</value>
+									</option>
+									<option>
+										<label>George Andrade</label>
+										<value>55</value>
+									</option>
+									<option>
+										<label>Howard Lee</label>
+										<value>43</value>
+									</option>
+									<option>
+										<label>Joey Leon</label>
+										<value>56</value>
+									</option>
+									<option>
+										<label>Jorge Lim</label>
+										<value>20</value>
+									</option>
+									<option>
+										<label>Joyce Tiu</label>
+										<value>4</value>
+									</option>
+									<option>
+										<label>Kamal Haider</label>
+										<value>14</value>
+									</option>
+									<option>
+										<label>Kwok Lee</label>
+										<value>10</value>
+									</option>
+									<option>
+										<label>Lana Kikic</label>
+										<value>49</value>
+									</option>
+									<option>
+										<label>Lee Wilson</label>
+										<value>15</value>
+									</option>
+									<option>
+										<label>Louie Lim</label>
+										<value>58</value>
+									</option>
+									<option>
+										<label>Louise Driggers</label>
+										<value>57</value>
+									</option>
+									<option>
+										<label>Manesh Tailor</label>
+										<value>46</value>
+									</option>
+									<option>
+										<label>Onur Erol</label>
+										<value>39</value>
+									</option>
+									<option>
+										<label>Peter Galbavy</label>
+										<value>52</value>
+									</option>
+									<option>
+										<label>Products Management</label>
+										<value>40</value>
+									</option>
+									<option>
+										<label>Raymond Gonzales</label>
+										<value>63</value>
+									</option>
+									<option>
+										<label>Richard Gould</label>
+										<value>38</value>
+									</option>
+									<option>
+										<label>Roger Blake</label>
+										<value>17</value>
+									</option>
+									<option>
+										<label>Ryan Kong</label>
+										<value>28</value>
+									</option>
+									<option>
+										<label>Simon Forey</label>
+										<value>36</value>
+									</option>
+									<option>
+										<label>Steve Lapp</label>
+										<value>11</value>
+									</option>
+									<option>
+										<label>Training Coverage</label>
+										<value>64</value>
+									</option>
+									<option>
+										<label>Lokesan Balakrishnan</label>
+										<value>66</value>
+									</option>
+									<option>
+										<label>Andy Mower</label>
+										<value>67</value>
+									</option>
+									<option>
+										<label>Vineeth Advai</label>
+										<value>68</value>
+									</option>
+									<option>
+										<label>Dina Gonzalez</label>
+										<value>69</value>
+									</option>
+									<option>
+										<label>Geetika Khurana</label>
+										<value>70</value>
+									</option>
+									<option>
+										<label>Alvin Magno</label>
+										<value>71</value>
+									</option>
+									<option>
+										<label>Elaine Bautista</label>
+										<value>72</value>
+									</option>
+									<option>
+										<label>Eric Aganda</label>
+										<value>73</value>
+									</option>
+									<option>
+										<label>Frederick Punzalan</label>
+										<value>74</value>
+									</option>
+									<option>
+										<label>Mary Gail Ang</label>
+										<value>75</value>
+									</option>
+									<option>
+										<label>Roselle Berdin</label>
+										<value>76</value>
+									</option>
+									<option>
+										<label>Washington Lim</label>
+										<value>77</value>
+									</option>
+									<option>
+										<label>Marie De Vera</label>
+										<value>107</value>
+									</option>
+									<option>
+										<label>Ian Chacon</label>
+										<value>106</value>
+									</option>
+								</options>
+							</userInput>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<userInput>
+								<description>Weighting</description>
+								<options>
+									<option>
+										<label>Beginner</label>
+										<value>0.3</value>
+									</option>
+									<option>
+										<label>Proficient</label>
+										<value>0.8</value>
+									</option>
+									<option>
+										<label>Expert</label>
+										<value>1</value>
+									</option>
+								</options>
+							</userInput>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+					</args>
+					<enablePassword>false</enablePassword>
+				</userCommand>
+			</command>
+			<command name="Remove Tech from component">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/rows/row/cell</target>
+				</targets>
+				<userCommand>
+					<type>script</type>
+					<runLocation>netprobe</runLocation>
+					<args>
+						<arg>
+							<static>../../netprobe_scripts/remove_tech_from_Component.sh</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<xpath>@rowname</xpath>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<static>&quot;</static>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<userInput>
+								<description>Tech</description>
+								<options>
+									<option>
+										<label>Andras Kecskes</label>
+										<value>24</value>
+									</option>
+									<option>
+										<label>Andrew Page</label>
+										<value>45</value>
+									</option>
+									<option>
+										<label>Ann Yap</label>
+										<value>54</value>
+									</option>
+									<option>
+										<label>Chris Banat</label>
+										<value>13</value>
+									</option>
+									<option>
+										<label>Christopher Alexander</label>
+										<value>48</value>
+									</option>
+									<option>
+										<label>Claus Nielsen</label>
+										<value>51</value>
+									</option>
+									<option>
+										<label>Crystal Lam</label>
+										<value>62</value>
+									</option>
+									<option>
+										<label>Dave Curnow</label>
+										<value>3</value>
+									</option>
+									<option>
+										<label>David Miller</label>
+										<value>18</value>
+									</option>
+									<option>
+										<label>David Randall</label>
+										<value>41</value>
+									</option>
+									<option>
+										<label>Derek Li</label>
+										<value>47</value>
+									</option>
+									<option>
+										<label>Development Global</label>
+										<value>37</value>
+									</option>
+									<option>
+										<label>Edu Morales</label>
+										<value>9</value>
+									</option>
+									<option>
+										<label>Ethan Allen</label>
+										<value>53</value>
+									</option>
+									<option>
+										<label>George Andrade</label>
+										<value>55</value>
+									</option>
+									<option>
+										<label>Howard Lee</label>
+										<value>43</value>
+									</option>
+									<option>
+										<label>Joey Leon</label>
+										<value>56</value>
+									</option>
+									<option>
+										<label>Jorge Lim</label>
+										<value>20</value>
+									</option>
+									<option>
+										<label>Joyce Tiu</label>
+										<value>4</value>
+									</option>
+									<option>
+										<label>Kamal Haider</label>
+										<value>14</value>
+									</option>
+									<option>
+										<label>Kwok Lee</label>
+										<value>10</value>
+									</option>
+									<option>
+										<label>Lana Kikic</label>
+										<value>49</value>
+									</option>
+									<option>
+										<label>Lee Wilson</label>
+										<value>15</value>
+									</option>
+									<option>
+										<label>Louie Lim</label>
+										<value>58</value>
+									</option>
+									<option>
+										<label>Louise Driggers</label>
+										<value>57</value>
+									</option>
+									<option>
+										<label>Manesh Tailor</label>
+										<value>46</value>
+									</option>
+									<option>
+										<label>Onur Erol</label>
+										<value>39</value>
+									</option>
+									<option>
+										<label>Peter Galbavy</label>
+										<value>52</value>
+									</option>
+									<option>
+										<label>Products Management</label>
+										<value>40</value>
+									</option>
+									<option>
+										<label>Raymond Gonzales</label>
+										<value>63</value>
+									</option>
+									<option>
+										<label>Richard Gould</label>
+										<value>38</value>
+									</option>
+									<option>
+										<label>Roger Blake</label>
+										<value>17</value>
+									</option>
+									<option>
+										<label>Ryan Kong</label>
+										<value>28</value>
+									</option>
+									<option>
+										<label>Simon Forey</label>
+										<value>36</value>
+									</option>
+									<option>
+										<label>Steve Lapp</label>
+										<value>11</value>
+									</option>
+									<option>
+										<label>Training Coverage</label>
+										<value>64</value>
+									</option>
+									<option>
+										<label>Lokesan Balakrishnan</label>
+										<value>66</value>
+									</option>
+									<option>
+										<label>Andy Mower</label>
+										<value>67</value>
+									</option>
+									<option>
+										<label>Vineeth Advai</label>
+										<value>68</value>
+									</option>
+									<option>
+										<label>Dina Gonzalez</label>
+										<value>69</value>
+									</option>
+									<option>
+										<label>Geetika Khurana</label>
+										<value>70</value>
+									</option>
+									<option>
+										<label>Alvin Magno</label>
+										<value>71</value>
+									</option>
+									<option>
+										<label>Elaine Bautista</label>
+										<value>72</value>
+									</option>
+									<option>
+										<label>Eric Aganda</label>
+										<value>73</value>
+									</option>
+									<option>
+										<label>Frederick Punzalan</label>
+										<value>74</value>
+									</option>
+									<option>
+										<label>Mary Gail Ang</label>
+										<value>75</value>
+									</option>
+									<option>
+										<label>Roselle Berdin</label>
+										<value>76</value>
+									</option>
+									<option>
+										<label>Washington Lim</label>
+										<value>77</value>
+									</option>
+								</options>
+							</userInput>
+						</arg>
+						<arg>
+							<concatenate>true</concatenate>
+							<static>&quot;</static>
+						</arg>
+					</args>
+					<enablePassword>false</enablePassword>
+				</userCommand>
+			</command>
+		</commandGroup>
+		<commandGroup name="Creating Snap shot data">
+			<command name="Create open ticket snap shot">
+				<userCommand>
+					<type>script</type>
+					<runLocation>gateway</runLocation>
+					<args>
+						<arg>
+							<static>./create_snap_shot_data.sh</static>
+						</arg>
+						<arg>
+							<concatenate>false</concatenate>
+							<static>OpenTickets</static>
+						</arg>
+					</args>
+				</userCommand>
+			</command>
+		</commandGroup>
+	</commands>
+	<scheduledCommands>
+		<scheduledCommand name="Create Open Ticket Snap Shot">
+			<command>
+				<command ref="Create open ticket snap shot"/>
+			</command>
+			<recurrence>
+				<pattern>
+					<weekly>
+						<days>
+							<monday>false</monday>
+							<tuesday>false</tuesday>
+							<wednesday>false</wednesday>
+							<thursday>false</thursday>
+							<friday>false</friday>
+							<saturday>false</saturday>
+							<sunday>true</sunday>
+						</days>
+						<everyXWeeks>1</everyXWeeks>
+					</weekly>
+				</pattern>
+				<range>
+					<start>2013-08-01T12:00:00</start>
+					<noEndDate/>
+				</range>
+			</recurrence>
+			<targets>
+				<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe/managedEntity[(@name=&quot;Ticket Updates&quot;)]</target>
+			</targets>
+		</scheduledCommand>
+	</scheduledCommands>
+	<rules>
+		<rule name="Failing Query 2">
+			<targets>
+				<target>/geneos/gateway/directory/probe/managedEntity/sampler[(param(&quot;PluginName&quot;)=&quot;SQL-TOOLKIT&quot;)]/dataview/headlines/cell[(@name=&quot;samplingStatus&quot;)]</target>
+			</targets>
+			<priority>1</priority>
+			<block>
+				<if>
+					<unlike>
+						<dataItem>
+							<property>@value</property>
+						</dataItem>
+						<string>OK</string>
+					</unlike>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>warning</severity>
+						</update>
+					</transaction>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>undefined</severity>
+						</update>
+					</transaction>
+				</if>
+			</block>
+		</rule>
+		<ruleGroup name="Logged in rules">
+			<rule name="Logged in Tech Count">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler/dataview/headlines/cell[(@name=&quot;Number Logged In&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="TechCount">../../rows/row/cell[(@column=&quot;Logged In&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<add>
+								<count>
+									<dataItems>
+										<pathAlias ref="TechCount"/>
+										<property>@value</property>
+									</dataItems>
+								</count>
+								<integer>0</integer>
+							</add>
+						</update>
+					</transaction>
+					<if>
+						<lt>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>1</integer>
+						</lt>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+			<rule name="Total techs">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Logged in Summary&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Summary Stats&quot;)]/rows/row[(@name=&quot;Total Logged in Techs&quot;)]/cell[(@column=&quot;Value&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="TechContribution">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler/dataview/headlines/cell[(@name=&quot;Number Logged In&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<total>
+								<dataItems>
+									<pathAlias ref="TechContribution"/>
+									<property>@value</property>
+								</dataItems>
+							</total>
+						</update>
+					</transaction>
+					<if>
+						<equal>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>0</integer>
+						</equal>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>critical</severity>
+							</update>
+						</transaction>
+						<if>
+							<lt>
+								<dataItem>
+									<property>@value</property>
+								</dataItem>
+								<integer>3</integer>
+							</lt>
+							<transaction>
+								<update>
+									<property>state/@severity</property>
+									<severity>warning</severity>
+								</update>
+							</transaction>
+							<transaction>
+								<update>
+									<property>state/@severity</property>
+									<severity>ok</severity>
+								</update>
+							</transaction>
+						</if>
+					</if>
+				</block>
+			</rule>
+		</ruleGroup>
+		<ruleGroup name="Ticket Flow">
+			<rule name="Outside response time">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Outside Agreed Response time&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Outside Agreed Response time&quot;)]/headlines/cell[(@name=&quot;Total&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="outsideresponse">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Outside Agreed Response time&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Outside Agreed Response time&quot;)]/rows/row/cell[(@column=&quot;Subject&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<add>
+								<count>
+									<dataItems>
+										<pathAlias ref="outsideresponse"/>
+										<property>@value</property>
+									</dataItems>
+								</count>
+								<integer>0</integer>
+							</add>
+						</update>
+					</transaction>
+					<if>
+						<equal>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>0</integer>
+						</equal>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+			<rule name="Delta">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Ticket Flow metrics&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow metrics&quot;)]/rows/row/cell[(@column=&quot;delta&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="Opened">../cell[(@column=&quot;opened&quot;)]</pathAlias>
+					<pathAlias name="Closed">../cell[(@column=&quot;closed&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<set>
+						<var ref="opened"/>
+						<dataItem>
+							<pathAlias ref="Opened"/>
+							<property>@value</property>
+						</dataItem>
+					</set>
+					<set>
+						<var ref="closed"/>
+						<dataItem>
+							<pathAlias ref="Closed"/>
+							<property>@value</property>
+						</dataItem>
+					</set>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<subtract>
+								<var ref="opened"/>
+								<var ref="closed"/>
+							</subtract>
+						</update>
+					</transaction>
+					<if>
+						<gt>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>0</integer>
+						</gt>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+			<rule name="Ticket Age Warning">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Oldest Ticket Info&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Oldest Ticket Info&quot;)]/rows/row[(@name=&quot;age&quot;)]/cell</target>
+				</targets>
+				<priority>1</priority>
+				<block>
+					<if>
+						<gt>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>10</integer>
+						</gt>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+			<rule name="Without Estimated Effort">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Without Estimated Effort&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Without Estimated Effort&quot;)]/headlines/cell[(@name=&quot;Count&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="Count">/geneos/gateway/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Without Estimated Effort&quot;)]/dataview[(@name=&quot;Without Estimated Effort&quot;)]/rows/row/cell[(@column=&quot;Assignee&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<add>
+								<count>
+									<dataItems>
+										<pathAlias ref="Count"/>
+										<property>@value</property>
+									</dataItems>
+								</count>
+								<integer>0</integer>
+							</add>
+						</update>
+					</transaction>
+					<if>
+						<and>
+							<equal>
+								<target>
+									<dataviewName/>
+								</target>
+								<string>Without Estimated Effort</string>
+							</equal>
+							<gt>
+								<dataItem>
+									<property>@value</property>
+								</dataItem>
+								<integer>0</integer>
+							</gt>
+						</and>
+						<transaction>
+							<delay>240</delay>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+					</if>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>ok</severity>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="Without Note Time Set">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Without Note Time Set&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Without Note Time Set&quot;)]/headlines/cell[(@name=&quot;Count&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="Count">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Without Note Time Set&quot;)]/dataview[(@name=&quot;Without Note Time Set&quot;)]/rows/row/cell[(@column=&quot;Ticket Number&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<add>
+								<count>
+									<dataItems>
+										<pathAlias ref="Count"/>
+										<property>@value</property>
+									</dataItems>
+								</count>
+								<integer>0</integer>
+							</add>
+						</update>
+					</transaction>
+					<if>
+						<and>
+							<equal>
+								<target>
+									<dataviewName/>
+								</target>
+								<string>Without Note Time Set</string>
+							</equal>
+							<gt>
+								<dataItem>
+									<property>@value</property>
+								</dataItem>
+								<integer>0</integer>
+							</gt>
+						</and>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+					</if>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>ok</severity>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="Time and Effort Combined">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Without Note Time Set&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Without Note Time Set&quot;)]/headlines/cell[(@name=&quot;Combined Count&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="Note_Time">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Without Note Time Set&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Without Note Time Set&quot;)]/headlines/cell[(@name=&quot;Count&quot;)]</pathAlias>
+					<pathAlias name="Time_Effort">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Without Estimated Effort&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Without Estimated Effort&quot;)]/headlines/cell[(@name=&quot;Count&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<add>
+								<dataItem>
+									<pathAlias ref="Note_Time"/>
+									<property>@value</property>
+								</dataItem>
+								<integer>0</integer>
+							</add>
+						</update>
+					</transaction>
+					<if>
+						<and>
+							<equal>
+								<target>
+									<dataviewName/>
+								</target>
+								<string>Without Note Time Set</string>
+							</equal>
+							<gt>
+								<dataItem>
+									<property>@value</property>
+								</dataItem>
+								<integer>0</integer>
+							</gt>
+						</and>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+					</if>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>ok</severity>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="Total open grades">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/headlines/cell[(@name=&quot;Total Open Grades&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="withClient">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Total open grades of work with client&quot;)]/cell[(@column=&quot;thevalue&quot;)]</pathAlias>
+					<pathAlias name="WithITRS">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Total open grades of work with ITRS&quot;)]/cell[(@column=&quot;thevalue&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<add>
+								<add>
+									<dataItem>
+										<pathAlias ref="withClient"/>
+										<property>@value</property>
+									</dataItem>
+									<dataItem>
+										<pathAlias ref="WithITRS"/>
+										<property>@value</property>
+									</dataItem>
+								</add>
+								<integer>0</integer>
+							</add>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="24 hour productivity">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/headlines/cell[(@name=&quot;24 hours productvity vs opened&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="velocity">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Velocity in past rolling 24 hours&quot;)]/cell[(@column=&quot;thevalue&quot;)]</pathAlias>
+					<pathAlias name="opened">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Opened in last rolling 24 hours&quot;)]/cell[(@column=&quot;thevalue&quot;)]</pathAlias>
+				</pathAliases>
+				<evaluateOnDataviewSample>false</evaluateOnDataviewSample>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<format>
+								<string>%5.0f %%</string>
+								<multiply>
+									<divide>
+										<dataItem>
+											<pathAlias ref="velocity"/>
+											<property>@value</property>
+										</dataItem>
+										<dataItem>
+											<pathAlias ref="opened"/>
+											<property>@value</property>
+										</dataItem>
+									</divide>
+									<integer>100</integer>
+								</multiply>
+							</format>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="1 week  productivity">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/headlines/cell[(@name=&quot;1 week productvity vs opened&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="velocity">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Velocity in past rolling 7 days&quot;)]/cell[(@column=&quot;thevalue&quot;)]</pathAlias>
+					<pathAlias name="opened">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Opened in last rolling 7 days&quot;)]/cell[(@column=&quot;thevalue&quot;)]</pathAlias>
+				</pathAliases>
+				<evaluateOnDataviewSample>false</evaluateOnDataviewSample>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<format>
+								<string>%5.0f %%</string>
+								<multiply>
+									<divide>
+										<dataItem>
+											<pathAlias ref="velocity"/>
+											<property>@value</property>
+										</dataItem>
+										<dataItem>
+											<pathAlias ref="opened"/>
+											<property>@value</property>
+										</dataItem>
+									</divide>
+									<integer>100</integer>
+								</multiply>
+							</format>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="1 month productivity">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/headlines/cell[(@name=&quot;1 month productvity vs opened&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="velocity">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Velocity in past rolling month&quot;)]/cell[(@column=&quot;thevalue&quot;)]</pathAlias>
+					<pathAlias name="opened">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Opened in last rolling month&quot;)]/cell[(@column=&quot;thevalue&quot;)]</pathAlias>
+				</pathAliases>
+				<evaluateOnDataviewSample>false</evaluateOnDataviewSample>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<format>
+								<string>%5.0f %%</string>
+								<multiply>
+									<divide>
+										<dataItem>
+											<pathAlias ref="velocity"/>
+											<property>@value</property>
+										</dataItem>
+										<dataItem>
+											<pathAlias ref="opened"/>
+											<property>@value</property>
+										</dataItem>
+									</divide>
+									<integer>100</integer>
+								</multiply>
+							</format>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="flow analysis">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row/cell[(@column=&quot;thevalue&quot;)]</target>
+				</targets>
+				<priority>100</priority>
+				<block>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>ok</severity>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="Longest running ticket">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Oldest open ticket&quot;)]/cell[(@column=&quot;thevalue&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<block>
+					<if>
+						<gt>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>56</integer>
+						</gt>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+			<rule name="Count tickets with inactive techs">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Tickets assigend to inactive techs&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Tickets with inactive techs&quot;)]/headlines/cell[(@name=&quot;Count&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="tickets">../../rows/row/cell[(state(&quot;snoozed&quot;)=&quot;0&quot;)][(@column=&quot;Tech&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<add>
+								<count>
+									<dataItems>
+										<pathAlias ref="tickets"/>
+										<property>@value</property>
+									</dataItems>
+								</count>
+								<integer>0</integer>
+							</add>
+						</update>
+					</transaction>
+					<if>
+						<gt>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>0</integer>
+						</gt>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+			<rule name="Unassigned and SLA">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Unassigned Tickets&quot;)]/cell[(@column=&quot;thevalue&quot;)]</target>
+				</targets>
+				<priority>50</priority>
+				<pathAliases>
+					<pathAlias name="outsideResponse">ancestor::gateway/directory/probe/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Outside Agreed Response time&quot;)]/dataview[(@name=&quot;Outside Agreed Response time&quot;)]/headlines/cell[(@name=&quot;Total&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<set>
+						<var ref="outsideresponse"/>
+						<first>
+							<dataItems>
+								<pathAlias ref="outsideResponse"/>
+								<property>@value</property>
+							</dataItems>
+						</first>
+					</set>
+					<if>
+						<gt>
+							<var ref="outsideresponse"/>
+							<integer>0</integer>
+						</gt>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>critical</severity>
+							</update>
+						</transaction>
+						<if>
+							<gt>
+								<dataItem>
+									<property>@value</property>
+								</dataItem>
+								<integer>0</integer>
+							</gt>
+							<transaction>
+								<update>
+									<property>state/@severity</property>
+									<severity>warning</severity>
+								</update>
+							</transaction>
+						</if>
+					</if>
+				</block>
+			</rule>
+			<rule name="Unassigned and SLA Warning Text">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/headlines/cell[(@name=&quot;UnasignedAlerts&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="UnassignedState">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]/rows/row[(@name=&quot;Unassigned Tickets&quot;)]/cell[(@column=&quot;thevalue&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<set>
+						<var ref="outsideresponse"/>
+						<dataItem>
+							<pathAlias ref="UnassignedState"/>
+							<property>state/@severity</property>
+						</dataItem>
+					</set>
+					<if>
+						<equal>
+							<var ref="outsideresponse"/>
+							<integer>1</integer>
+						</equal>
+						<transaction>
+							<update>
+								<property>@value</property>
+								<string>NO NEW TICKETS</string>
+							</update>
+						</transaction>
+						<if>
+							<equal>
+								<var ref="outsideresponse"/>
+								<integer>2</integer>
+							</equal>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<string>NEW TICKETS</string>
+								</update>
+							</transaction>
+							<if>
+								<equal>
+									<var ref="outsideresponse"/>
+									<integer>3</integer>
+								</equal>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<string>SLA BREACH</string>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</if>
+				</block>
+			</rule>
+			<rule name="TEMP - Regional Severity">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Regional Summary Information&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow metrics&quot;)]/rows/row/cell[(@column=&quot;Ticket Count&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<block>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>ok</severity>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+		</ruleGroup>
+		<ruleGroup name="Staffing Cover">
+			<rule name="Active Time zone">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Time Zone&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Staffing Cover&quot;)]/rows/row/cell[(@column=&quot;active&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<block>
+					<if>
+						<equal>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>1</integer>
+						</equal>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>undefined</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+			<rule name="Staff Cover">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Staff Coverage and Experience&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Staff Coverage and Experience&quot;)]/rows/row/cell[(@column=&quot;numberPlannedStaff&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<block>
+					<if>
+						<lt>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>3</integer>
+						</lt>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+		</ruleGroup>
+		<ruleGroup name="Rotation Control">
+			<ruleGroup name="Version 7_X rotation controls">
+				<rule name="APAC Rotation Control">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;APAC&quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Logged in APAC Techs&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Logged in APAC Techs&quot;)]/headlines/cell[(@name=&quot;Number Logged In&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+				<rule name="EMEA Rotation">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;EMEA&quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Logged in EMEA Techs&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Logged in EMEA Techs&quot;)]/headlines/cell[(@name=&quot;Number Logged In&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+				<rule name="AMRS Rotation">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;AMRS&quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Logged in AMRS Techs&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Logged in AMRS Techs&quot;)]/headlines/cell[(@name=&quot;Number Logged In&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+				<rule name="APAC Reverse Rotation Control">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;APACreverse &quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Logged in APAC Techs&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Logged in APAC Techs&quot;)]/headlines/cell[(@name=&quot;Number Logged In&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>-11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>-11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>-10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+			</ruleGroup>
+			<ruleGroup name="Version 8_X rotation Controls">
+				<rule name="London Support Rotation Control">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;London Support&quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row[(@name=&quot;London Support&quot;)]/cell[(@column=&quot;Active Techs&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+				<rule name="Hong Kong Support Rotation Control">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;Hong Kong Support&quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row[(@name=&quot;Hong Kong Support&quot;)]/cell[(@column=&quot;Active Techs&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+				<rule name="New York Support Rotation Control">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;New York Support&quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row[(@name=&quot;New York Support&quot;)]/cell[(@column=&quot;Active Techs&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+				<rule name="Manila Support Rotation Control">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;Manila Support&quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row[(@name=&quot;Manila Support&quot;)]/cell[(@column=&quot;Active Techs&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+				<rule name="Manila 25 Support Rotation Control">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;Manila25&quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row[(@name=&quot;Manila 2.5 Support&quot;)]/cell[(@column=&quot;Active Techs&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+				<rule name=" London Development  Rotation Control">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;London Development&quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row[(@name=&quot;London Development&quot;)]/cell[(@column=&quot;Active Techs&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+				<rule name="Manila Development Rotation Control">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Rotation Control&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Rotation Control&quot;)]/rows/row[(@name=&quot;Manila Development&quot;)]/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<priority>1</priority>
+					<pathAliases>
+						<pathAlias name="loggedin">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row[(@name=&quot;Manila Development&quot;)]/cell[(@column=&quot;Active Techs&quot;)]</pathAlias>
+					</pathAliases>
+					<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+					<block>
+						<if>
+							<and>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<integer>11</integer>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>@value</property>
+									<integer>11</integer>
+								</update>
+							</transaction>
+							<if>
+								<gt>
+									<dataItem>
+										<pathAlias ref="loggedin"/>
+										<property>@value</property>
+									</dataItem>
+									<integer>0</integer>
+								</gt>
+								<transaction>
+									<update>
+										<property>@value</property>
+										<integer>10</integer>
+									</update>
+								</transaction>
+							</if>
+						</if>
+					</block>
+				</rule>
+			</ruleGroup>
+		</ruleGroup>
+		<ruleGroup name="Coverage">
+			<rule name="Overall Weighting">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/headlines/cell[(@name=&quot;Total Weighting&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="coverage">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/rows/row/cell[(@column=&quot;Usage Weitghing&quot;)]</pathAlias>
+				</pathAliases>
+				<evaluateOnDataviewSample>false</evaluateOnDataviewSample>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<format>
+								<string>%5.0f</string>
+								<add>
+									<total>
+										<dataItems>
+											<pathAlias ref="coverage"/>
+											<property>@value</property>
+										</dataItems>
+									</total>
+									<integer>0</integer>
+								</add>
+							</format>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="EMEA Live Coverage">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/headlines/cell[(@name=&quot;EMEA Live Coverage&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="coverage">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/rows/row/cell[(@column=&quot;EMEA Live Coverage&quot;)]</pathAlias>
+					<pathAlias name="overall">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/headlines/cell[(@name=&quot;Total Weighting&quot;)]</pathAlias>
+				</pathAliases>
+				<evaluateOnDataviewSample>false</evaluateOnDataviewSample>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<format>
+								<string>%5.0f</string>
+								<multiply>
+									<divide>
+										<total>
+											<dataItems>
+												<pathAlias ref="coverage"/>
+												<property>@value</property>
+											</dataItems>
+										</total>
+										<dataItem>
+											<pathAlias ref="overall"/>
+											<property>@value</property>
+										</dataItem>
+									</divide>
+									<integer>100</integer>
+								</multiply>
+							</format>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="APAC Live Coverage">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/headlines/cell[(@name=&quot;APAC Live Coverage&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="coverage">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/rows/row/cell[(@column=&quot;APAC Live Coverage&quot;)]</pathAlias>
+					<pathAlias name="overall">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/headlines/cell[(@name=&quot;Total Weighting&quot;)]</pathAlias>
+				</pathAliases>
+				<evaluateOnDataviewSample>false</evaluateOnDataviewSample>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<format>
+								<string>%5.0f</string>
+								<multiply>
+									<divide>
+										<total>
+											<dataItems>
+												<pathAlias ref="coverage"/>
+												<property>@value</property>
+											</dataItems>
+										</total>
+										<dataItem>
+											<pathAlias ref="overall"/>
+											<property>@value</property>
+										</dataItem>
+									</divide>
+									<integer>100</integer>
+								</multiply>
+							</format>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="AMRS Live Coverage">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/headlines/cell[(@name=&quot;ARMS live Coverage&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="coverage">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/rows/row/cell[(@column=&quot;AMRS Live Coverage&quot;)]</pathAlias>
+					<pathAlias name="overall">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/headlines/cell[(@name=&quot;Total Weighting&quot;)]</pathAlias>
+				</pathAliases>
+				<evaluateOnDataviewSample>false</evaluateOnDataviewSample>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<format>
+								<string>%5.0f</string>
+								<multiply>
+									<divide>
+										<total>
+											<dataItems>
+												<pathAlias ref="coverage"/>
+												<property>@value</property>
+											</dataItems>
+										</total>
+										<dataItem>
+											<pathAlias ref="overall"/>
+											<property>@value</property>
+										</dataItem>
+									</divide>
+									<integer>100</integer>
+								</multiply>
+							</format>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+			<rule name="Overall Live Coverage">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/headlines/cell[(@name=&quot;Overall live Coverage&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="coverage">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/rows/row/cell[(@column=&quot;Overall Live Coverage&quot;)]</pathAlias>
+					<pathAlias name="overall">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/headlines/cell[(@name=&quot;Total Weighting&quot;)]</pathAlias>
+				</pathAliases>
+				<evaluateOnDataviewSample>false</evaluateOnDataviewSample>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<format>
+								<string>%5.0f</string>
+								<multiply>
+									<divide>
+										<total>
+											<dataItems>
+												<pathAlias ref="coverage"/>
+												<property>@value</property>
+											</dataItems>
+										</total>
+										<dataItem>
+											<pathAlias ref="overall"/>
+											<property>@value</property>
+										</dataItem>
+									</divide>
+									<integer>100</integer>
+								</multiply>
+							</format>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+		</ruleGroup>
+		<ruleGroup name="Estimates">
+			<rule name="Count of bad estimates">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Estimate Evaluation&quot;)]/sampler[(@name=&quot;Estimates NOT IN -1 to 1&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Estimates NOT IN -1 to 1&quot;)]/headlines/cell[(@name=&quot;Count&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="Badestimates">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Estimate Evaluation&quot;)]/sampler[(@name=&quot;Estimates NOT IN -1 to 1&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Estimates NOT IN -1 to 1&quot;)]/rows/row/cell[(@column=&quot;Actual Grade&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<add>
+								<count>
+									<dataItems>
+										<pathAlias ref="Badestimates"/>
+										<property>@value</property>
+									</dataItems>
+								</count>
+								<integer>0</integer>
+							</add>
+						</update>
+					</transaction>
+					<if>
+						<gt>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>0</integer>
+						</gt>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+			<rule name="Average Estimate Differential ">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Estimate Evaluation&quot;)]/sampler[(@name=&quot;Estimate Accuracy&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Estimate Accuracy&quot;)]/headlines/cell[(@name=&quot;Average Estimate Differential &quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="diff">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Estimate Evaluation&quot;)]/sampler[(@name=&quot;Estimate Accuracy&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Estimate Accuracy&quot;)]/rows/row/cell[(@column=&quot;Estimate Grade vs Actual Time&quot;)]</pathAlias>
+				</pathAliases>
+				<evaluateOnDataviewSample>true</evaluateOnDataviewSample>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<add>
+								<average>
+									<dataItems>
+										<pathAlias ref="diff"/>
+										<property>@value</property>
+									</dataItems>
+								</average>
+								<integer>0</integer>
+							</add>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+		</ruleGroup>
+		<ruleGroup name="Third line Quality review">
+			<rule name="Count of third line">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Third Line Quality Review&quot;)]/sampler[(@name=&quot;Third line quality review&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Third line quality review&quot;)]/headlines/cell[(@name=&quot;Count&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="count">/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Third Line Quality Review&quot;)]/sampler[(@name=&quot;Third line quality review&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Third line quality review&quot;)]/rows/row/cell[(@column=&quot;Status&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<count>
+								<dataItems>
+									<pathAlias ref="count"/>
+									<property>@value</property>
+								</dataItems>
+							</count>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+		</ruleGroup>
+		<ruleGroup name="PEBL to Helpdesk feedback">
+			<rule name="PEBL to Helpdesk feedback">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 1&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 2&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 3&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 4&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 5&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 6&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 7&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 8&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 9&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 10&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 11&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 12&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 13&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 14&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL to Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL to Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 15&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 1&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 2&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 3&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 4&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 5&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 6&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 7&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 8&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 9&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 10&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 11&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 12&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 13&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 14&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;PEBL into Dev Helpdesk Feedback&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 15&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 1&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 2&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 3&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 4&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 5&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 6&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 7&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 8&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 9&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 10&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 11&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 12&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 13&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 14&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;Suggest Workarounds&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Suggest Workarounds&quot;)]/rows/row/cell[(@column=&quot;Helpdesk ticket 15&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="DateSent">../cell[(@column=&quot;Date E-mail Sent&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<!--Only send the mail if it has not already been sent-->
+					<!--not (value = "Mail Sent")-->
+					<!--the delay exists so that the release team have time between closing the tickets and getting the release uploaded-->
+					<if>
+						<equal>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<string>Ticket </string>
+						</equal>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>undefined</severity>
+							</update>
+						</transaction>
+					</if>
+					<if>
+						<and>
+							<not>
+								<equal>
+									<dataItem>
+										<property>@value</property>
+									</dataItem>
+									<string>Ticket </string>
+								</equal>
+							</not>
+							<equal>
+								<dataItem>
+									<pathAlias ref="DateSent"/>
+									<property>@value</property>
+								</dataItem>
+								<string/>
+							</equal>
+						</and>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+							<action ref="Send Mail from PEBL to Helpdesk"/>
+							<action ref="Mark Mail Sent"/>
+						</transaction>
+						<if>
+							<and>
+								<not>
+									<equal>
+										<dataItem>
+											<property>@value</property>
+										</dataItem>
+										<string>Ticket </string>
+									</equal>
+								</not>
+								<not>
+									<equal>
+										<dataItem>
+											<pathAlias ref="DateSent"/>
+											<property>@value</property>
+										</dataItem>
+										<string/>
+									</equal>
+								</not>
+							</and>
+							<transaction>
+								<update>
+									<property>state/@severity</property>
+									<severity>ok</severity>
+								</update>
+							</transaction>
+						</if>
+					</if>
+				</block>
+			</rule>
+			<rule name="Count PEBLs with connected clients bu no HD number">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;PEBl to Helpdesk Link up&quot;)]/sampler[(@name=&quot;PEBLs with no HD number&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;With Client but no HD number&quot;)]/headlines/cell[(@name=&quot;Count&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="IDs">../../rows/row/cell[(state(&quot;snoozed&quot;)=&quot;0&quot;)][(@column=&quot;pkey&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<add>
+								<count>
+									<dataItems>
+										<pathAlias ref="IDs"/>
+										<property>@value</property>
+									</dataItems>
+								</count>
+								<integer>0</integer>
+							</add>
+						</update>
+					</transaction>
+					<if>
+						<gt>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>0</integer>
+						</gt>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>warning</severity>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+		</ruleGroup>
+		<ruleGroup name="Quality Assurance">
+			<rule name="Score checking">
+				<targets>
+					<target>/geneos/gateway/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview/rows/row/cell[(@column=&quot;score&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<block>
+					<if>
+						<gte>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<integer>2</integer>
+						</gte>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>critical</severity>
+							</update>
+						</transaction>
+						<if>
+							<gte>
+								<dataItem>
+									<property>@value</property>
+								</dataItem>
+								<integer>1</integer>
+							</gte>
+							<transaction>
+								<update>
+									<property>state/@severity</property>
+									<severity>warning</severity>
+								</update>
+							</transaction>
+							<transaction>
+								<update>
+									<property>state/@severity</property>
+									<severity>ok</severity>
+								</update>
+							</transaction>
+						</if>
+					</if>
+				</block>
+			</rule>
+			<rule name="Severity of Region">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview/headlines/cell[(@name=&quot;Regional Alert level&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="worstSeverity">../../rows/row/cell[(@column=&quot;score&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<set>
+						<var ref="worstServity"/>
+						<maximum>
+							<dataItems>
+								<pathAlias ref="worstSeverity"/>
+								<property>state/@severity</property>
+							</dataItems>
+						</maximum>
+					</set>
+					<if>
+						<gt>
+							<var ref="worstServity"/>
+							<integer>1</integer>
+						</gt>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<var ref="worstServity"/>
+							</update>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</block>
+			</rule>
+			<rule name="Total Active techs">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row[(@name=&quot;Total&quot;)]/cell[(@column=&quot;Active Techs&quot;)]</target>
+				</targets>
+				<priority>1</priority>
+				<pathAliases>
+					<pathAlias name="totalInCol">../../../rows/row[not(@name=&quot;Total&quot;)]/cell[(@column=&quot;Active Techs&quot;)]</pathAlias>
+				</pathAliases>
+				<block>
+					<transaction>
+						<update>
+							<property>@value</property>
+							<total>
+								<dataItems>
+									<pathAlias ref="totalInCol"/>
+									<property>@value</property>
+								</dataItems>
+							</total>
+						</update>
+					</transaction>
+				</block>
+			</rule>
+		</ruleGroup>
+	</rules>
+	<databaseLogging>
+		<enabled>true</enabled>
+		<connection>
+			<database>
+				<mysql>
+					<serverName>192.168.10.111</serverName>
+					<databaseName>supportsrv</databaseName>
+				</mysql>
+			</database>
+			<gatewayAuthentication>
+				<userName>geneos</userName>
+				<password>
+					<plaintext>netagent</plaintext>
+				</password>
+			</gatewayAuthentication>
+			<clientAuthentication>
+				<userName>geneos</userName>
+				<password>
+					<plaintext>netagent</plaintext>
+				</password>
+			</clientAuthentication>
+		</connection>
+		<tables>
+			<table name="log_helpdeskissues_table">
+				<type>string</type>
+			</table>
+			<table name="log_supportpebls_table">
+				<type>string</type>
+			</table>
+		</tables>
+		<items>
+			<item name="Logged in techs">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;Logged in Virtual Probe&quot;)]/managedEntity[(@name=&quot;Logged in Summary Stats&quot;)]/sampler[(@name=&quot;Logged in Summary&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Summary Stats&quot;)]/rows/row[(@name=&quot;Total Logged in Techs&quot;)]/cell[(@column=&quot;Value&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Logged in AMRS Techs&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Logged in AMRS Techs&quot;)]/headlines/cell[(@name=&quot;Number Logged In&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Logged in APAC Techs&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Logged in APAC Techs&quot;)]/headlines/cell[(@name=&quot;Number Logged In&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Logged in EMEA Techs&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Logged in EMEA Techs&quot;)]/headlines/cell[(@name=&quot;Number Logged In&quot;)]</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Logged in Non Support&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Logged in Non Support&quot;)]/headlines/cell[(@name=&quot;Number Logged In&quot;)]</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Oldest ticket in days">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Oldest Ticket Info&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Oldest Ticket Info&quot;)]/rows/row[(@name=&quot;age&quot;)]/cell</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Outside first response SLA">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Outside Agreed Response time&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Outside Agreed Response time&quot;)]/headlines/cell[(@name=&quot;Total&quot;)]</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Ticket Flow">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Ticket Flow metrics&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow metrics&quot;)]/rows/row/cell</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Latest Updates">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Ticket Updates&quot;)]/sampler[(@name=&quot;Last Updates&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Last Updates&quot;)]/rows/row[(@name=&quot;1&quot;)]/cell[(@column=&quot;techname&quot;)]</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Available Techs">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Logged in Techs&quot;)]/sampler[(@name=&quot;Staff Coverage and Experience&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Staff Coverage and Experience&quot;)]/rows/row/cell[(@column=&quot;numberPlannedStaff&quot;)]</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Region Knowledge Coverage">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Geneos Components&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Geneos Components&quot;)]/headlines/cell</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Tech Knowledge">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Coverage&quot;)]/sampler[(@name=&quot;Tech Coverage&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Tech Coverage&quot;)]/rows/row/cell[(@column=&quot;Coverage&quot;)]</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Time not logged or estimated">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Without Note Time Set&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Without Note Time Set&quot;)]/headlines/cell</target>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Response and Age information&quot;)]/sampler[(@name=&quot;Without Estimated Effort&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Without Estimated Effort&quot;)]/headlines/cell[(@name=&quot;Count&quot;)]</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Ticket Analysis">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe001&quot;)]/managedEntity[(@name=&quot;Work Time and Velocity&quot;)]/sampler[(@name=&quot;Ticket Flow Analysis&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Analysis&quot;)]//cell</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Client ticket flow logging">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Client Location Ticket Flow Analysis&quot;)]/sampler[(@name=&quot;Client Location Time Logging&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Client Location Log&quot;)]/rows/row/cell</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<item name="Client Location Group Ticket Flow Logging">
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Client Location Ticket Flow Analysis&quot;)]/sampler[(@name=&quot;Client Location_Group Time Logging&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Client Location_Group Log&quot;)]/rows/row/cell</target>
+				</targets>
+				<table ref="log_helpdeskissues_table"/>
+			</item>
+			<itemGroup name="Estimates">
+				<item name="Estimate vs actual differential">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Estimate Evaluation&quot;)]/sampler[(@name=&quot;Summary of Grades&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Summary of Grades&quot;)]/rows/row/cell[(@column=&quot;value&quot;)]</target>
+					</targets>
+					<table ref="log_helpdeskissues_table"/>
+				</item>
+				<item name="Incorrect estimate count">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Estimate Evaluation&quot;)]/sampler[(@name=&quot;Estimates NOT IN -1 to 1&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Estimates NOT IN -1 to 1&quot;)]/headlines/cell[(@name=&quot;Count&quot;)]</target>
+					</targets>
+					<table ref="log_helpdeskissues_table"/>
+				</item>
+				<item name="Estimate Average Differential ">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Estimate Evaluation&quot;)]/sampler[(@name=&quot;Estimate Accuracy&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Estimate Accuracy&quot;)]/headlines/cell[(@name=&quot;Average Estimate Differential &quot;)]</target>
+					</targets>
+					<table ref="log_helpdeskissues_table"/>
+				</item>
+			</itemGroup>
+			<itemGroup name="Quality Attributes">
+				<item name="Regional Average Estimate">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row/cell[(@column=&quot;Average Estimate&quot;)]</target>
+					</targets>
+					<table ref="log_helpdeskissues_table"/>
+				</item>
+				<item name="Regional Hours Worked">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row/cell[(@column=&quot;Hours spent&quot;)]</target>
+					</targets>
+					<table ref="log_helpdeskissues_table"/>
+				</item>
+			</itemGroup>
+			<itemGroup name="Ticket Flow attributes">
+				<item name="Regional Ticket Count">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Regional Summary Information&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow metrics&quot;)]/rows/row/cell[(@column=&quot;Ticket Count&quot;)]</target>
+					</targets>
+					<table ref="log_helpdeskissues_table"/>
+				</item>
+				<item name="Regional Active techs">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Regional Attributes&quot;)]/rows/row/cell[(@column=&quot;Active Techs&quot;)]</target>
+					</targets>
+					<table ref="log_helpdeskissues_table"/>
+				</item>
+				<item name="Ticket Flow Through Regions">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Ticket Flow Through Regions&quot;)]/rows/row/cell[(@column=&quot;Ticket Flow&quot;)]</target>
+					</targets>
+					<table ref="log_helpdeskissues_table"/>
+				</item>
+				<item name="Tickets taken per region">
+					<targets>
+						<target>/geneos/gateway[(@name=&quot;Helpdesk Ticket Flow&quot;)]/directory/probe[(@name=&quot;helpdeskTicketFlow_probe002&quot;)]/managedEntity[(@name=&quot;Regional Information&quot;)]/sampler[(@name=&quot;Ticket Flow Through Regions&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;Tickets  taken per Region&quot;)]/rows/row/cell[(@column=&quot;Tickets&quot;)]</target>
+					</targets>
+					<table ref="log_helpdeskissues_table"/>
+				</item>
+			</itemGroup>
+		</items>
+	</databaseLogging>
+	<operatingEnvironment>
+		<!--The gateway name must be set, the listen port should be set-->
+		<gatewayName>Helpdesk Ticket Flow</gatewayName>
+		<listenPort>9146</listenPort>
+	</operatingEnvironment>
+</gateway>

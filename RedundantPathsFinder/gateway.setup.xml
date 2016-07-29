@@ -1,0 +1,1459 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--Edited using Gateway Setup Editor version GA3.4.0-160118 at 2016-07-29 11:01:15 by cmorley on ITRSLP043-->
+<gateway compatibility="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://schema.itrsgroup.com/RAfeature-publishing3-160419/gateway.xsd">
+	<probes>
+		<probe name="New Probe">
+			<hostname>localhost</hostname>
+			<port>7036</port>
+		</probe>
+	</probes>
+	<managedEntities>
+		<managedEntity name="New Managed entity">
+			<probe ref="New Probe"/>
+			<environment ref="New Environment"/>
+			<sampler ref="New Sampler"/>
+			<sampler ref="New Sampler 5"/>
+			<sampler ref="Kafka Rule Redundancy Check"/>
+		</managedEntity>
+		<managedEntity name="New Managed entity 1">
+			<probe ref="New Probe"/>
+			<environment ref="New Environment"/>
+			<sampler ref="testaseyeryh"/>
+			<sampler ref="New Sampler"/>
+			<sampler ref="t8o yf kuygygil"/>
+			<sampler ref="New Sampler 1"/>
+			<sampler ref="realtick_checks"/>
+			<sampler ref="NT-Hardware"/>
+			<sampler ref="New Sampler 4"/>
+		</managedEntity>
+	</managedEntities>
+	<types/>
+	<samplers>
+		<sampler name="New Sampler">
+			<plugin>
+				<cpu/>
+			</plugin>
+		</sampler>
+		<sampler name="New Sampler 1">
+			<plugin>
+				<disk>
+					<partitions>
+						<partition>
+							<path>
+								<data/>
+							</path>
+						</partition>
+					</partitions>
+					<autoDetect>
+						<data>true</data>
+					</autoDetect>
+				</disk>
+			</plugin>
+		</sampler>
+		<sampler name="testaseyeryh">
+			<plugin>
+				<cpu/>
+			</plugin>
+		</sampler>
+		<sampler name="t8o yf kuygygil">
+			<plugin>
+				<Gateway-managedEntitiesData/>
+			</plugin>
+		</sampler>
+		<sampler name="testers">
+			<plugin>
+				<cpu/>
+			</plugin>
+		</sampler>
+		<sampler name="a">
+			<plugin>
+				<disk/>
+			</plugin>
+		</sampler>
+		<sampler name="New Sampler 2">
+			<plugin>
+				<cpu/>
+			</plugin>
+		</sampler>
+		<sampler disabled="true" name="realtick_checks">
+			<var-group>
+				<data>Nagios Integration</data>
+			</var-group>
+			<plugin>
+				<toolkit>
+					<samplerScript>
+						<data>
+/usr/local/bin/python2.7 /opt/geneos/cmc-nagiosparser/main.py realtick
+</data>
+					</samplerScript>
+				</toolkit>
+			</plugin>
+		</sampler>
+		<sampler name="realtick_checks">
+			<var-group>
+				<data>Nagios Integration</data>
+			</var-group>
+			<plugin>
+				<toolkit>
+					<samplerScript>
+						<data>/home/gateway/tester.sh</data>
+					</samplerScript>
+				</toolkit>
+			</plugin>
+			<dataviews>
+				<dataview name="realtick_checks">
+					<additions>
+						<var-columns>
+							<data>
+								<column>
+									<data>severityLevel</data>
+								</column>
+								<column>
+									<data>snoozed</data>
+								</column>
+							</data>
+						</var-columns>
+					</additions>
+				</dataview>
+			</dataviews>
+		</sampler>
+		<sampler name="Tor_GM_Solace_HBs">
+			<var-group>
+				<data>Applications</data>
+			</var-group>
+			<sampleInterval>
+				<data>5</data>
+			</sampleInterval>
+			<plugin>
+				<fkm>
+					<display>
+						<columns>
+							<column>status</column>
+							<column>triggerCount</column>
+							<column>triggerDetails</column>
+							<column>updateRate</column>
+							<column>filename</column>
+							<column>fileSize</column>
+							<column>secondsSinceLastModified</column>
+							<column>secondsSinceLastTrigger</column>
+							<column>permissions</column>
+							<column>lastModificationTime</column>
+							<column>absolutePath</column>
+						</columns>
+						<triggerMode>SINGLE</triggerMode>
+						<lastTriggerInStatus>
+							<data>true</data>
+						</lastTriggerInStatus>
+						<showLastModificationTimeInSeconds>
+							<data>true</data>
+						</showLastModificationTimeInSeconds>
+						<showSecondsSinceLastTrigger>
+							<data>true</data>
+						</showSecondsSinceLastTrigger>
+						<triggerCountMode>CUMULATIVE_TOTAL</triggerCountMode>
+					</display>
+					<maxConditionsPerKey>
+						<data>30</data>
+					</maxConditionsPerKey>
+					<wildcardMonitorAllMatches>
+						<data>true</data>
+					</wildcardMonitorAllMatches>
+					<files>
+						<file>
+							<source>
+								<filename>
+									<data>/opt/mds_data/logs/solace/heartbeat/heartbeat_*_togc1NY_gm_NY*</data>
+								</filename>
+							</source>
+							<tables>
+								<table>
+									<severity>fail</severity>
+									<keyTable>
+										<fkmTable ref="Heartbeat Fail"/>
+									</keyTable>
+								</table>
+							</tables>
+						</file>
+						<file>
+							<source>
+								<filename>
+									<data>/opt/mds_data/logs/solace/heartbeat/heartbeat_*_togc1LN_gm_LN*</data>
+								</filename>
+							</source>
+							<tables>
+								<table>
+									<severity>fail</severity>
+									<keyTable>
+										<fkmTable ref="Heartbeat Fail"/>
+									</keyTable>
+								</table>
+							</tables>
+						</file>
+						<file>
+							<source>
+								<filename>
+									<data>/opt/mds_data/logs/solace/heartbeat/heartbeat_*_togc1HK_gm_HK*</data>
+								</filename>
+							</source>
+							<tables>
+								<table>
+									<severity>fail</severity>
+									<keyTable>
+										<fkmTable ref="Heartbeat Fail"/>
+									</keyTable>
+								</table>
+							</tables>
+						</file>
+						<file>
+							<source>
+								<filename>
+									<data>/opt/mds_data/logs/solace/heartbeat/heartbeat_*_togc1TO_gm_TO*</data>
+								</filename>
+							</source>
+							<tables>
+								<table>
+									<severity>fail</severity>
+									<keyTable>
+										<fkmTable ref="Heartbeat Fail"/>
+									</keyTable>
+								</table>
+							</tables>
+						</file>
+						<file>
+							<source>
+								<filename>
+									<data>/opt/mds_data/logs/solace/heartbeat/heartbeat_*_hkgc1TO_gm_TO*</data>
+								</filename>
+							</source>
+							<tables>
+								<table>
+									<severity>fail</severity>
+									<keyTable>
+										<fkmTable ref="Heartbeat Fail"/>
+									</keyTable>
+								</table>
+							</tables>
+						</file>
+						<file>
+							<source>
+								<filename>
+									<data>/opt/mds_data/logs/solace/heartbeat/heartbeat_*_lngc1TO_gm_TO*</data>
+								</filename>
+							</source>
+							<tables>
+								<table>
+									<severity>fail</severity>
+									<keyTable>
+										<fkmTable ref="Heartbeat Fail"/>
+									</keyTable>
+								</table>
+							</tables>
+						</file>
+						<file>
+							<source>
+								<filename>
+									<data>/opt/mds_data/logs/solace/heartbeat/heartbeat_*_nygc1TO_gm_TO*</data>
+								</filename>
+							</source>
+							<tables>
+								<table>
+									<severity>fail</severity>
+									<keyTable>
+										<fkmTable ref="Heartbeat Fail"/>
+									</keyTable>
+								</table>
+							</tables>
+						</file>
+					</files>
+				</fkm>
+			</plugin>
+		</sampler>
+		<sampler name="VAS -- DB request - Deal volume">
+			<plugin>
+				<sql-toolkit>
+					<queries>
+						<query>
+							<name>
+								<data>Volume_Input</data>
+							</name>
+							<sql>
+								<data>select SYSTEM_SOURCE, BOOKING_TARGET, count(*) from VAS.REG_REALTIME_INPUT where INPUT_DATE BETWEEN to_date(&apos;&lt;today %Y%m%d&gt;&apos;,&apos;YYYYMMDD&apos;) and to_date(&apos;&lt;tomorrow %Y%m%d&gt;&apos;,&apos;YYYYMMDD&apos;) group by SYSTEM_SOURCE, BOOKING_TARGET</data>
+							</sql>
+						</query>
+					</queries>
+					<connection>
+						<database>
+							<oracle>
+								<var-databaseName>
+									<data>VAS_UAT</data>
+								</var-databaseName>
+							</oracle>
+						</database>
+						<var-userName>
+							<data>vas_audit</data>
+						</var-userName>
+						<password>
+							<stdAES>+encs+3AAB97EA34A7675A8168D6E1C787A414</stdAES>
+						</password>
+						<closeConnectionAfterQuery>
+							<data>true</data>
+						</closeConnectionAfterQuery>
+					</connection>
+				</sql-toolkit>
+			</plugin>
+		</sampler>
+		<sampler name="New Sampler 3">
+			<plugin>
+				<sql-toolkit>
+					<queries>
+						<query>
+							<name>
+								<data/>
+							</name>
+							<sql>
+								<data/>
+							</sql>
+						</query>
+					</queries>
+					<connection>
+						<database>
+							<mysql/>
+						</database>
+					</connection>
+				</sql-toolkit>
+			</plugin>
+		</sampler>
+		<sampler name="NT-Hardware">
+			<var-group>
+				<data>Hardware</data>
+			</var-group>
+			<displayName>WINTEL-Hardware</displayName>
+			<plugin>
+				<hardware/>
+			</plugin>
+			<dataviews>
+				<dataview name="NT-Hardware">
+					<displayName>WINTEL-Hardware</displayName>
+					<additions>
+						<var-headlines>
+							<data>
+								<headline>
+									<data>Service_Critical</data>
+								</headline>
+							</data>
+						</var-headlines>
+						<columns>
+							<column>Service_Critical</column>
+							<column>Service_Impact</column>
+						</columns>
+					</additions>
+				</dataview>
+			</dataviews>
+		</sampler>
+		<sampler name="New Sampler 5">
+			<plugin>
+				<processes>
+					<processParameters>
+						<data>
+							<parameter>rss</parameter>
+							<parameter>pcpu</parameter>
+						</data>
+					</processParameters>
+					<processes>
+						<process>
+							<data>
+								<alias>
+									<data>gateway</data>
+								</alias>
+								<ID>
+									<searchString>
+										<data>gateway</data>
+									</searchString>
+									<rules>basic/regex</rules>
+								</ID>
+							</data>
+						</process>
+					</processes>
+				</processes>
+			</plugin>
+		</sampler>
+		<sampler name="New Sampler 4">
+			<plugin>
+				<stateTracker>
+					<trackerGroup name="test">
+						<trackers>
+							<tracker name="test">
+								<filename>
+									<data>/home/gateway/test.txt</data>
+								</filename>
+								<rewind>
+									<data>true</data>
+								</rewind>
+								<transitionStates>
+									<defaultState name="default"/>
+									<state name="hello">
+										<keys>
+											<key>
+												<regularExpression>
+													<data>
+														<regex>hello</regex>
+													</data>
+												</regularExpression>
+											</key>
+										</keys>
+									</state>
+								</transitionStates>
+							</tracker>
+						</trackers>
+					</trackerGroup>
+				</stateTracker>
+			</plugin>
+		</sampler>
+		<sampler disabled="true" name="BrokerConsolidatorTracker">
+			<plugin>
+				<stateTracker>
+					<columns>
+						<renameTrackerColumn>
+							<data>Server</data>
+						</renameTrackerColumn>
+						<column>
+							<data>Record Type</data>
+						</column>
+					</columns>
+					<behavioural>
+						<fileTruncateResetsTrackers>
+							<data>true</data>
+						</fileTruncateResetsTrackers>
+					</behavioural>
+					<trackerGroup name="IsActive">
+						<trackers>
+							<tracker name="BP1XEUAP3543">
+								<filename>
+									<data>
+\\BP1XEUAP3543\F$\Data\Apps\BP\Logs\FOA-BrokerConsolidator.log
+</data>
+								</filename>
+								<rewind>
+									<data>false</data>
+								</rewind>
+								<messageTimestamp>
+									<identifyingPattern>
+										<data>\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}</data>
+									</identifyingPattern>
+									<datePatternGroup>0</datePatternGroup>
+									<dateFormat>
+										<data>%Y-%m-%d %H:%M:%S</data>
+									</dateFormat>
+								</messageTimestamp>
+								<transitionStates>
+									<defaultState name="Inactive"/>
+									<state name="Active">
+										<keys>
+											<key>
+												<regularExpression>
+													<data>
+														<regex>.+Finished.Trayport.Login.successfully.+</regex>
+													</data>
+												</regularExpression>
+											</key>
+											<key>
+												<regularExpression>
+													<data>
+														<regex>Saved\s\d+\s(Trades|Orders)</regex>
+														<flags>
+															<i>true</i>
+															<s>false</s>
+														</flags>
+													</data>
+												</regularExpression>
+											</key>
+										</keys>
+										<timeout>
+											<relative>
+												<interval>10</interval>
+												<units>minutes</units>
+											</relative>
+											<state ref="No recent activity detected"/>
+										</timeout>
+									</state>
+									<state name="No recent activity detected">
+										<timeout>
+											<relative>
+												<interval>1</interval>
+												<units>hours</units>
+											</relative>
+											<state ref="Inactive"/>
+										</timeout>
+									</state>
+									<state name="Inactive"/>
+								</transitionStates>
+							</tracker>
+							<tracker name="BP1XEUAP3544">
+								<filename>
+									<data>
+\\BP1XEUAP3544\F$\Data\Apps\BP\Logs\FOA-BrokerConsolidator.log
+</data>
+								</filename>
+								<rewind>
+									<data>false</data>
+								</rewind>
+								<messageTimestamp>
+									<identifyingPattern>
+										<data>\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}</data>
+									</identifyingPattern>
+									<datePatternGroup>0</datePatternGroup>
+									<dateFormat>
+										<data>%Y-%m-%d %H:%M:%S</data>
+									</dateFormat>
+								</messageTimestamp>
+								<transitionStates>
+									<defaultState name="Inactive"/>
+									<state name="Active">
+										<keys>
+											<key>
+												<regularExpression>
+													<data>
+														<regex>.+Finished.Trayport.Login.successfully.+</regex>
+													</data>
+												</regularExpression>
+											</key>
+											<key>
+												<regularExpression>
+													<data>
+														<regex>Saved\s\d+\s(Trades|Orders)</regex>
+														<flags>
+															<i>true</i>
+															<s>false</s>
+														</flags>
+													</data>
+												</regularExpression>
+											</key>
+										</keys>
+										<timeout>
+											<relative>
+												<interval>10</interval>
+												<units>minutes</units>
+											</relative>
+											<state ref="No recent activity detected"/>
+										</timeout>
+									</state>
+									<state name="No recent activity detected">
+										<timeout>
+											<relative>
+												<interval>1</interval>
+												<units>hours</units>
+											</relative>
+											<state ref="Inactive"/>
+										</timeout>
+									</state>
+									<state name="Inactive"/>
+								</transitionStates>
+							</tracker>
+						</trackers>
+					</trackerGroup>
+				</stateTracker>
+			</plugin>
+		</sampler>
+		<sampler name="SYN Incoming">
+			<var-group>
+				<data>SYN Fix Connection</data>
+			</var-group>
+			<plugin>
+				<fix>
+					<logFile>
+						<var ref="LOG_DIR"/>
+						<data>/some/path/NAME.*0100.1.INCOMING</data>
+					</logFile>
+				</fix>
+			</plugin>
+		</sampler>
+		<sampler name="New Sampler 6">
+			<plugin>
+				<Gateway-breachPredictor>
+					<predictors/>
+				</Gateway-breachPredictor>
+			</plugin>
+		</sampler>
+		<sampler name="Kafka Rule Redundancy Check">
+			<plugin>
+				<sql-toolkit>
+					<queries>
+						<query>
+							<name>
+								<data>Kafka Rule Hits</data>
+							</name>
+							<sql>
+								<data>select p.xpath, h.hitcount from paths as p join hits as h on p.id = h.id;</data>
+							</sql>
+						</query>
+					</queries>
+					<connection>
+						<database>
+							<mysql>
+								<var-serverName>
+									<data>192.168.10.128</data>
+								</var-serverName>
+								<var-databaseName>
+									<data>healthtest</data>
+								</var-databaseName>
+							</mysql>
+						</database>
+						<var-userName>
+							<data>root</data>
+						</var-userName>
+						<password>
+							<stdAES>+encs+B111B172A062E1D895EBAB1E8E25D7B2</stdAES>
+						</password>
+					</connection>
+				</sql-toolkit>
+			</plugin>
+		</sampler>
+	</samplers>
+	<actions>
+		<throttle name="New Throttle">
+			<noOfActions>1</noOfActions>
+			<per>1</per>
+			<interval>seconds</interval>
+		</throttle>
+		<action name="MESSAGE">
+			<script>
+				<exeFile>/home/gateway/scripts/ICE.sh</exeFile>
+				<arguments>
+					<data/>
+				</arguments>
+				<runLocation>gateway</runLocation>
+			</script>
+		</action>
+	</actions>
+	<effects>
+		<effect disabled="true" name="New Effect">
+			<script>
+				<exeFile/>
+				<arguments>
+					<data/>
+				</arguments>
+				<runLocation>gateway</runLocation>
+			</script>
+		</effect>
+	</effects>
+	<commands>
+		<command name="New Command">
+			<targets>
+				<target>/geneos/gateway/directory</target>
+			</targets>
+			<userCommand>
+				<type>script</type>
+				<runLocation>gateway</runLocation>
+				<args>
+					<arg>
+						<text>
+							<data>/home/gateway/scripts/aha4.pl</data>
+						</text>
+					</arg>
+				</args>
+			</userCommand>
+		</command>
+		<command name="Print Arguments">
+			<targets>
+				<target>/geneos/gateway[(@name=&quot;Kafka&quot;)]/directory/probe[(@name=&quot;New Probe&quot;)]/managedEntity[(@name=&quot;New Managed entity 1&quot;)]/sampler[(@name=&quot;New Sampler&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;New Sampler&quot;)]/rows/row[(@name=&quot;Average_cpu&quot;)]/cell[(@column=&quot;percentUtilisation&quot;)]</target>
+			</targets>
+			<userCommand>
+				<type>script</type>
+				<runLocation>netprobe</runLocation>
+				<args>
+					<arg>
+						<xpath>@value</xpath>
+					</arg>
+					<arg>
+						<xpath>@rowname</xpath>
+					</arg>
+				</args>
+			</userCommand>
+		</command>
+		<command disabled="true" name="Status Check">
+			<targets>
+				<target>
+/geneos/gateway[(@name=&quot;CR-T0-PROD&quot;)]/directory/probe/managedEntity[wild(@name,&quot;*APP&quot;)]
+</target>
+				<target>
+/geneos/gateway[(@name=&quot;CR-T0-PREPROD&quot;)]/directory/probe/managedEntity[wild(@name,&quot;*APP&quot;)]
+</target>
+			</targets>
+			<userCommand>
+				<type>script</type>
+				<runLocation>netprobe</runLocation>
+				<args>
+					<arg>
+						<static> /cs/CSNolio/CSApp/</static>
+					</arg>
+					<arg>
+						<text>
+							<var ref="t0-user"/>
+						</text>
+					</arg>
+					<arg>
+						<text>
+							<data>/bin/printInsightT0Status.sh </data>
+						</text>
+					</arg>
+					<arg>
+						<text>
+							<var ref="env-name"/>
+						</text>
+					</arg>
+				</args>
+				<enablePassword>true</enablePassword>
+			</userCommand>
+		</command>
+		<command disabled="true" name="Status Check">
+			<targets>
+				<target>
+/geneos/gateway[(@name=&quot;CR-T0-PROD&quot;)]/directory/probe/managedEntity[wild(@name,&quot;*APP&quot;)]
+</target>
+				<target>
+/geneos/gateway[(@name=&quot;CR-T0-PREPROD&quot;)]/directory/probe/managedEntity[wild(@name,&quot;*APP&quot;)]
+</target>
+			</targets>
+			<userCommand>
+				<type>script</type>
+				<runLocation>netprobe</runLocation>
+				<args>
+					<arg>
+						<static>
+/cs/CSNolio/CSApp/inst0uat/bin/printInsightT0Status.sh preprod
+</static>
+					</arg>
+				</args>
+				<enablePassword>true</enablePassword>
+			</userCommand>
+		</command>
+		<command name="New Command 1">
+			<targets>
+				<target>/geneos/gateway[(@name=&quot;Kafka&quot;)]/directory/probe[(@name=&quot;New Probe&quot;)]/managedEntity[(@name=&quot;New Managed entity 1&quot;)]/sampler[(@name=&quot;NT-Hardware&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;NT-Hardware&quot;)]/rows/row[(@name=&quot;cpuUtilisation&quot;)]/cell[(@column=&quot;Value&quot;)]</target>
+			</targets>
+			<userCommand>
+				<type>script</type>
+				<runLocation>gateway</runLocation>
+				<args>
+					<arg>
+						<concatenate>true</concatenate>
+						<static>/home/gateway/wstest.sh</static>
+					</arg>
+					<arg>
+						<concatenate>true</concatenate>
+						<text>
+							<var ref="test"/>
+						</text>
+					</arg>
+				</args>
+			</userCommand>
+		</command>
+	</commands>
+	<scheduledCommands>
+		<scheduledCommand name="New Scheduled command">
+			<command>
+				<command ref="New Command"/>
+			</command>
+			<recurrence>
+				<pattern>
+					<days>
+						<everyWeekday/>
+					</days>
+				</pattern>
+				<range>
+					<start>2016-06-28T14:00:00</start>
+					<noEndDate/>
+				</range>
+			</recurrence>
+			<targets>
+				<target>/geneos/gateway/directory</target>
+			</targets>
+		</scheduledCommand>
+	</scheduledCommands>
+	<rules>
+		<rule name="New Rule">
+			<targets>
+				<target>/geneos/gateway[(@name=&quot;Kafka&quot;)]/directory/probe[(@name=&quot;New Probe&quot;)]/managedEntity[(@name=&quot;New Managed entity 1&quot;)]/sampler[(@name=&quot;New Sampler&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;New Sampler&quot;)]/rows/row[(@name=&quot;Average_cpu&quot;)]/cell[(@column=&quot;percentUtilisation&quot;)]</target>
+			</targets>
+			<priority>1</priority>
+			<block>
+				<if>
+					<gt>
+						<dataItem>
+							<property>@value</property>
+						</dataItem>
+						<integer>1</integer>
+					</gt>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>critical</severity>
+						</update>
+					</transaction>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>ok</severity>
+						</update>
+					</transaction>
+				</if>
+			</block>
+		</rule>
+		<rule name="New Rule 1">
+			<targets>
+				<target>/geneos/gateway[(@name=&quot;Kafka&quot;)]/directory/probe[(@name=&quot;New Probe&quot;)]/managedEntity[(@name=&quot;New Managed entity 1&quot;)]/sampler[(@name=&quot;realtick_checks&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;realtick_checks&quot;)]/rows/row[(@name=&quot;1&quot;)]/cell[(@column=&quot;severityLevel&quot;)]</target>
+			</targets>
+			<priority>1</priority>
+			<block>
+				<transaction>
+					<update>
+						<property>@value</property>
+						<printDate>
+							<string>%A</string>
+							<now/>
+						</printDate>
+					</update>
+				</transaction>
+			</block>
+		</rule>
+		<rule disabled="true" name="Geneos GMI DBPRD FZMAINC Memo Runs Batch Status">
+			<targets>
+				<target>
+/geneos/gateway[(@name=&quot;NA_CHC_PTD_DEUTSCHEBANK_P01&quot;)]/directory/probe/managedEntity/sampler[(param(&quot;Group&quot;)=&quot;GMI BATCHES&quot;)]/dataview[(@name=&quot;GMI MEMO RUNS&quot;)]/rows/row[(@name=&quot;FZMAINC1&quot;)]/cell[(@column=&quot;Actual_start_time&quot;)]
+</target>
+			</targets>
+			<priority>2</priority>
+			<pathVariables>
+				<pathVariable name="myName">
+					<value>
+						<target>
+							<rowName/>
+						</target>
+					</value>
+				</pathVariable>
+				<pathVariable name="Client_name">
+					<value>
+						<target>
+							<managedEntityName/>
+						</target>
+					</value>
+				</pathVariable>
+				<pathVariable name="PPMAINC_NAME">
+					<value>
+						<concat>
+							<string>E</string>
+							<substr>
+								<target>
+									<rowName/>
+								</target>
+								<integer>2</integer>
+							</substr>
+						</concat>
+					</value>
+				</pathVariable>
+			</pathVariables>
+			<pathAliases>
+				<pathAlias name="PPMAINC_JOBS_Completed">
+ancestor-or-self::managedEntity[(@name=var(&quot;Client_name&quot;))]/sampler/dataview[(@name=&quot;GMI PPMAINC&quot;)]/rows/row[(@name=var(&quot;PPMAINC_NAME&quot;))]/cell[(@column=&quot;Actual_end_time&quot;)]
+</pathAlias>
+				<pathAlias name="EOM_JOBS">
+ancestor-or-self::headlines/cell[(@name=&quot;NbofBatches&quot;)]
+</pathAlias>
+				<pathAlias name="Actual_end">../cell[(@column=&quot;Actual_end_time&quot;)]</pathAlias>
+			</pathAliases>
+			<block>
+				<set>
+					<var ref="envName"/>
+					<target>
+						<managedEntityName/>
+					</target>
+				</set>
+				<set>
+					<var ref="JobName"/>
+					<target>
+						<rowName/>
+					</target>
+				</set>
+				<set>
+					<var ref="Message"/>
+					<concat>
+						<var ref="JobName"/>
+						<string>
+is late as per the DB Target Start time 11:45 GMT. This is a Critical, please email DB Support on GMLD.PRODSupport@db.com advising of the delay. Create an Issue log and start investigating.
+</string>
+					</concat>
+				</set>
+				<set>
+					<var ref="Message2"/>
+					<concat>
+						<var ref="JobName"/>
+						<string>
+The target start time 11:30 GMT has been breached. Prepare to take action- NO LOTUS NOTES/NO EMAIL to DB. Just WATCH IT
+</string>
+					</concat>
+				</set>
+				<if>
+					<and>
+						<and>
+							<equal>
+								<dataItem>
+									<property>@value</property>
+								</dataItem>
+								<string/>
+							</equal>
+							<not>
+								<activeTime ref="DBAEST AMER Every day FZMAINC 1145 till 0030 GMT"/>
+							</not>
+						</and>
+						<not>
+							<activeTime ref="Target of DBAEST AMER Every day FZMAINC1 1130 till 1145 GMT"/>
+						</not>
+					</and>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>undefined</severity>
+						</update>
+					</transaction>
+				</if>
+				<if>
+					<and>
+						<and>
+							<like>
+								<var ref="envName"/>
+								<string>DBAPRD EST</string>
+							</like>
+							<equal>
+								<dataItem>
+									<property>@value</property>
+								</dataItem>
+								<string/>
+							</equal>
+						</and>
+						<activeTime ref="Target of DBAEST AMER Every day FZMAINC1 1130 till 1145 GMT"/>
+					</and>
+					<transaction>
+						<userData>
+							<name>MESSAGE</name>
+							<var ref="Message2"/>
+						</userData>
+						<update>
+							<property>state/@severity</property>
+							<severity>warning</severity>
+						</update>
+						<action ref="SendMail_L2_GMI_DB"/>
+					</transaction>
+					<if>
+						<and>
+							<and>
+								<like>
+									<var ref="envName"/>
+									<string>DBAPRD EST</string>
+								</like>
+								<equal>
+									<dataItem>
+										<property>@value</property>
+									</dataItem>
+									<string/>
+								</equal>
+							</and>
+							<activeTime ref="DBAEST AMER Every day FZMAINC 1145 till 0030 GMT"/>
+						</and>
+						<transaction>
+							<userData>
+								<name>MESSAGE</name>
+								<var ref="Message"/>
+							</userData>
+							<update>
+								<property>state/@severity</property>
+								<severity>critical</severity>
+							</update>
+							<action ref="SendMail_L2_GMI_DB"/>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</if>
+				<!--
+elseif $(envName) like "DBAPRD EST" and $(jobName) like "FZMAINC1" and value = "" and $(Actual_end) like "" and within activetime "DBAEST AMER Every day FZMAINC 1145 till 0030 GMT" then
+-->
+				<!-- run "SendMail_L2_GMI_DB" -->
+				<!-- $(jobName) like "FZMAINC1" and -->
+			</block>
+		</rule>
+		<rule disabled="true" name="New Rule 2">
+			<targets>
+				<target/>
+			</targets>
+			<priority>1</priority>
+			<pathVariables>
+				<pathVariable name="me">
+					<value>
+						<target>
+							<managedEntityName/>
+						</target>
+					</value>
+				</pathVariable>
+			</pathVariables>
+			<pathAliases>
+				<pathAlias name="test">/geneos/gateway[(@name=&quot;test&quot;)]/directory/probe[(@name=&quot;New Probe&quot;)]/managedEntity[(@name=var(&quot;me&quot;))]</pathAlias>
+			</pathAliases>
+			<block>
+				<set>
+					<var ref="JobName"/>
+					<target>
+						<rowName/>
+					</target>
+				</set>
+				<set>
+					<var ref="Message"/>
+					<concat>
+						<var ref="JobName"/>
+						<string>XXXXXXX.</string>
+					</concat>
+				</set>
+				<set>
+					<var ref="Message2"/>
+					<concat>
+						<var ref="JobName"/>
+						<string> YYYYYYYYYYYYY</string>
+					</concat>
+				</set>
+				<if>
+					<equal>
+						<dataItem>
+							<property>@value</property>
+						</dataItem>
+						<string/>
+					</equal>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>undefined</severity>
+						</update>
+					</transaction>
+				</if>
+				<if>
+					<and>
+						<equal>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<string/>
+						</equal>
+						<activeTime ref="Target of  DBAEST AMER Every day FZMAINC1 1130 till 1145 GMT"/>
+					</and>
+					<transaction>
+						<userData>
+							<name>MESSAGE</name>
+							<var ref="Message2"/>
+						</userData>
+						<update>
+							<property>state/@severity</property>
+							<severity>warning</severity>
+						</update>
+						<action ref="SendMail_L2_GMI_DB"/>
+					</transaction>
+					<if>
+						<and>
+							<equal>
+								<dataItem>
+									<property>@value</property>
+								</dataItem>
+								<string/>
+							</equal>
+							<activeTime ref="DBAEST AMER Every day FZMAINC 1145 till 0030 GMT"/>
+						</and>
+						<transaction>
+							<userData>
+								<name>MESSAGE</name>
+								<var ref="Message"/>
+							</userData>
+							<update>
+								<property>state/@severity</property>
+								<severity>critical</severity>
+							</update>
+							<action ref="SendMail_L2_GMI_DB"/>
+						</transaction>
+						<transaction>
+							<update>
+								<property>state/@severity</property>
+								<severity>ok</severity>
+							</update>
+						</transaction>
+					</if>
+				</if>
+			</block>
+		</rule>
+		<rule disabled="true" name="New Rule 3">
+			<targets>
+				<target/>
+			</targets>
+			<priority>1</priority>
+			<block/>
+		</rule>
+		<rule disabled="true" name="netprobe status">
+			<targets>
+				<target>/geneos/gateway/directory/probe[(@name=&quot;Virtual Gateway Probe&quot;)]/managedEntity/sampler[(@name=&quot;Gateway-probeData&quot;)][(@type=&quot;Gateway&quot;)]/dataview[(@name=&quot;Gateway-probeData&quot;)]/rows/row/cell[(@value=&quot;Down&quot;)][(@column=&quot;connectionState&quot;)]</target>
+			</targets>
+			<priority>10</priority>
+			<pathAliases>
+				<pathAlias name="type">../cell[(@column=&quot;type&quot;)]</pathAlias>
+			</pathAliases>
+			<block>
+				<set>
+					<var ref="type"/>
+					<dataItem>
+						<pathAlias ref="type"/>
+						<property>@value</property>
+					</dataItem>
+				</set>
+				<set>
+					<var ref="mail_subject"/>
+					<format>
+						<string>%s|%s Critical!GENEOS netprobe %s&apos;s status change to down</string>
+						<target>
+							<gatewayName/>
+						</target>
+						<target>
+							<managedEntityName/>
+						</target>
+						<target>
+							<rowName/>
+						</target>
+					</format>
+				</set>
+				<if>
+					<and>
+						<equal>
+							<var ref="type"/>
+							<string>Normal</string>
+						</equal>
+						<equal>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<string>Down</string>
+						</equal>
+					</and>
+					<transaction>
+						<userData>
+							<name>EMAIL_TO</name>
+							<var ref="GENEOS_MAIL_RECIPIENT"/>
+						</userData>
+						<userData>
+							<name>SUBJECT</name>
+							<var ref="mail_subject"/>
+						</userData>
+						<userData>
+							<name>MESSAGE</name>
+							<value>
+								<data>GENEOS netprobe is down, please action immediately.</data>
+							</value>
+						</userData>
+						<action ref="MESSAGE"/>
+					</transaction>
+				</if>
+			</block>
+		</rule>
+		<rule disabled="true" name="netprobe status">
+			<targets>
+				<target>/geneos/gateway/directory/probe[(@name=&quot;Virtual Gateway Probe&quot;)]/managedEntity/sampler[(@name=&quot;Gateway-probeData&quot;)][(@type=&quot;Gateway&quot;)]/dataview[(@name=&quot;Gateway-probeData&quot;)]/rows/row/cell[(@value=&quot;Down&quot;)][(@column=&quot;connectionState&quot;)]</target>
+			</targets>
+			<priority>10</priority>
+			<pathAliases>
+				<pathAlias name="type">../cell[(@column=&quot;type&quot;)]</pathAlias>
+			</pathAliases>
+			<block>
+				<set>
+					<var ref="type"/>
+					<dataItem>
+						<pathAlias ref="type"/>
+						<property>@value</property>
+					</dataItem>
+				</set>
+				<set>
+					<var ref="mail_subject"/>
+					<format>
+						<string>%s|%s Critical!GENEOS netprobe %s&apos;s status change to down</string>
+						<target>
+							<gatewayName/>
+						</target>
+						<target>
+							<managedEntityName/>
+						</target>
+						<target>
+							<rowName/>
+						</target>
+					</format>
+				</set>
+				<if>
+					<and>
+						<equal>
+							<var ref="type"/>
+							<string>Normal</string>
+						</equal>
+						<equal>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<string>Down</string>
+						</equal>
+					</and>
+					<transaction>
+						<userData>
+							<name>EMAIL_TO</name>
+							<var ref="GENEOS_MAIL_RECIPIENT"/>
+						</userData>
+						<userData>
+							<name>SUBJECT</name>
+							<var ref="mail_subject"/>
+						</userData>
+						<userData>
+							<name>MESSAGE</name>
+							<value>
+								<data>GENEOS netprobe is down, please action immediately.</data>
+							</value>
+						</userData>
+						<action ref="MESSAGE"/>
+					</transaction>
+				</if>
+			</block>
+		</rule>
+		<rule disabled="true" name="netprobe status">
+			<targets>
+				<target>/geneos/gateway/directory/probe[(@name=&quot;Virtual Gateway Probe&quot;)]/managedEntity/sampler[(@name=&quot;Gateway-probeData&quot;)][(@type=&quot;Gateway&quot;)]/dataview[(@name=&quot;Gateway-probeData&quot;)]/rows/row/cell[(@value=&quot;Down&quot;)][(@column=&quot;connectionState&quot;)]</target>
+			</targets>
+			<priority>10</priority>
+			<pathAliases>
+				<pathAlias name="type">../cell[(@column=&quot;type&quot;)]</pathAlias>
+			</pathAliases>
+			<block>
+				<set>
+					<var ref="type"/>
+					<dataItem>
+						<pathAlias ref="type"/>
+						<property>@value</property>
+					</dataItem>
+				</set>
+				<set>
+					<var ref="mail_subject"/>
+					<format>
+						<string>%s|%s Critical!GENEOS netprobe %s&apos;s status change to down</string>
+						<target>
+							<gatewayName/>
+						</target>
+						<target>
+							<managedEntityName/>
+						</target>
+						<target>
+							<rowName/>
+						</target>
+					</format>
+				</set>
+				<if>
+					<and>
+						<equal>
+							<var ref="type"/>
+							<string>Normal</string>
+						</equal>
+						<equal>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<string>Down</string>
+						</equal>
+					</and>
+					<transaction>
+						<userData>
+							<name>EMAIL_TO</name>
+							<var ref="GENEOS_MAIL_RECIPIENT"/>
+						</userData>
+						<userData>
+							<name>SUBJECT</name>
+							<var ref="mail_subject"/>
+						</userData>
+						<userData>
+							<name>MESSAGE</name>
+							<value>
+								<data>GENEOS netprobe is down, please action immediately.</data>
+							</value>
+						</userData>
+						<action ref="MESSAGE"/>
+					</transaction>
+				</if>
+			</block>
+		</rule>
+		<rule name="netprobe status">
+			<targets>
+				<target>/geneos/gateway[(@name=&quot;Kafka&quot;)]/directory/probe[(@name=&quot;New Probe&quot;)]/managedEntity[(@name=&quot;New Managed entity 1&quot;)]/sampler[(@name=&quot;New Sampler 4&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;test&quot;)]/rows/row[(@name=&quot;test&quot;)]/cell[(@column=&quot;previousState&quot;)]</target>
+			</targets>
+			<priority>1</priority>
+			<pathAliases>
+				<pathAlias name="type">../cell[(@column=&quot;type&quot;)]</pathAlias>
+			</pathAliases>
+			<block>
+				<set>
+					<var ref="type"/>
+					<dataItem>
+						<pathAlias ref="type"/>
+						<property>@value</property>
+					</dataItem>
+				</set>
+				<set>
+					<var ref="mail_subject"/>
+					<format>
+						<string>%s|%s Critical!GENEOS netprobe %s&apos;s status change to down</string>
+						<target>
+							<gatewayName/>
+						</target>
+						<target>
+							<managedEntityName/>
+						</target>
+						<target>
+							<rowName/>
+						</target>
+					</format>
+				</set>
+				<if>
+					<and>
+						<equal>
+							<var ref="type"/>
+							<string>Normal</string>
+						</equal>
+						<equal>
+							<dataItem>
+								<property>@value</property>
+							</dataItem>
+							<string>Down</string>
+						</equal>
+					</and>
+					<transaction>
+						<userData>
+							<name>EMAIL_TO</name>
+							<var ref="GENEOS_MAIL_RECIPIENT"/>
+						</userData>
+						<userData>
+							<name>SUBJECT</name>
+							<var ref="mail_subject"/>
+						</userData>
+						<userData>
+							<name>MESSAGE</name>
+							<value>
+								<data>GENEOS netprobe is down, please action immediately.</data>
+							</value>
+						</userData>
+						<action ref="MESSAGE"/>
+					</transaction>
+				</if>
+			</block>
+		</rule>
+		<rule name="New Rule 4">
+			<targets>
+				<target>/geneos/gateway[(@name=&quot;Kafka&quot;)]/directory/probe[(@name=&quot;New Probe&quot;)]/managedEntity[(@name=&quot;New Managed entity&quot;)]/sampler[(@name=&quot;New Sampler&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;New Sampler&quot;)]/rows/row[(@name=&quot;cpu_0&quot;)]/cell[(@column=&quot;percentUtilisation&quot;)]</target>
+			</targets>
+			<priority>1</priority>
+			<block>
+				<if>
+					<gt>
+						<dataItem>
+							<property>@value</property>
+						</dataItem>
+						<integer>1</integer>
+					</gt>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>critical</severity>
+						</update>
+					</transaction>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>ok</severity>
+						</update>
+					</transaction>
+				</if>
+			</block>
+		</rule>
+		<rule name="New Rule 5" disabled="true">
+			<targets>
+				<target>/geneos/gateway[(@name=&quot;Kafka&quot;)]/directory/probe[(@name=&quot;New Probe&quot;)]/managedEntity[(@name=&quot;New Managed entity 1&quot;)]/sampler[(@name=&quot;New Sampler 1&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;New Sampler 1&quot;)]/rows/row[(@name=&quot;/boot&quot;)]/cell[(@column=&quot;percentageUsed&quot;)]</target>
+			</targets>
+			<priority>1</priority>
+			<block>
+				<if>
+					<gt>
+						<dataItem>
+							<property>@value</property>
+						</dataItem>
+						<integer>80</integer>
+					</gt>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>critical</severity>
+						</update>
+					</transaction>
+					<transaction>
+						<update>
+							<property>state/@severity</property>
+							<severity>ok</severity>
+						</update>
+					</transaction>
+				</if>
+			</block>
+		</rule>
+	</rules>
+	<environments>
+		<environment name="New Environment">
+			<var name="test">
+				<string>exampleofEnv</string>
+			</var>
+		</environment>
+	</environments>
+	<knowledgeBase>
+		<urlTemplate name="New URL template">
+			<urlTemplateElements>
+				<urlTemplateElement>
+					<literal/>
+				</urlTemplateElement>
+			</urlTemplateElements>
+		</urlTemplate>
+		<kbaSet name="New KBA set">
+			<kba>
+				<label>Test</label>
+				<urlElements>
+					<urlElement>
+						<literal>https://ice.itrsgroup.com</literal>
+					</urlElement>
+				</urlElements>
+				<targets>
+					<target>/geneos/gateway[(@name=&quot;Kafka&quot;)]/directory/probe[(@name=&quot;New Probe&quot;)]/managedEntity[(@name=&quot;New Managed entity&quot;)]/sampler[(@name=&quot;New Sampler&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;New Sampler&quot;)]/rows/row[(@name=&quot;Average_cpu&quot;)]/cell[(@column=&quot;percentUtilisation&quot;)]</target>
+				</targets>
+			</kba>
+		</kbaSet>
+	</knowledgeBase>
+	<publishing>
+		<enabled>true</enabled>
+		<adapter>
+			<kafka>
+				<topicPrefix>geneos-</topicPrefix>
+				<brokerList>192.168.220.54:9094</brokerList>
+			</kafka>
+		</adapter>
+	</publishing>
+	<operatingEnvironment>
+		<!--The gateway name must be set, the listen port should be set-->
+		<gatewayName>Kafka</gatewayName>
+		<listenPorts>
+			<insecure>
+				<listenPort>7039</listenPort>
+			</insecure>
+		</listenPorts>
+	</operatingEnvironment>
+</gateway>
