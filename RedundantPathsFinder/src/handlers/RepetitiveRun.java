@@ -18,14 +18,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.w3c.dom.Node;
 
-import com.itrsgroup.openaccess.Callback;
-import com.itrsgroup.openaccess.Closable;
-import com.itrsgroup.openaccess.Connection;
-import com.itrsgroup.openaccess.ErrorCallback;
-import com.itrsgroup.openaccess.OpenAccess;
-import com.itrsgroup.openaccess.dataset.DataSetChange;
-import com.itrsgroup.openaccess.dataset.DataSetQuery;
-
 import fileProcessing.FileReaderWriter;
 import objects.GatewaySetupFile;
 import objects.IncludeFile;

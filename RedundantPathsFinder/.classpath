@@ -2,19 +2,19 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="C:/Users/cmorley/Desktop/Development/Jars/geneos-openaccess-client.jar"/>
-	<classpathentry kind="lib" path="C:/Users/cmorley/Desktop/Development/Jars/logback-classic-1.0.13.jar"/>
-	<classpathentry kind="lib" path="C:/Users/cmorley/Desktop/Development/Jars/logback-core-1.0.13.jar"/>
-	<classpathentry kind="lib" path="Res/quartz-2.2.2.jar"/>
-	<classpathentry kind="lib" path="Res/quartz-jobs-2.2.2.jar"/>
-	<classpathentry kind="lib" path="Res/slf4j-api-1.7.7.jar"/>
+	<classpathentry kind="lib" path="Res/kafka_2.11-0.10.0.0-javadoc.jar"/>
 	<classpathentry kind="lib" path="Res/kafka_2.11-0.10.0.0.jar"/>
 	<classpathentry kind="lib" path="Res/kafka-clients-0.10.0.0.jar"/>
 	<classpathentry kind="lib" path="Res/kafka-streams-0.10.0.0.jar"/>
 	<classpathentry kind="lib" path="Res/kafka-tools-0.10.0.0.jar"/>
-	<classpathentry kind="lib" path="Res/kafka_2.11-0.10.0.0-javadoc.jar"/>
-	<classpathentry kind="lib" path="C:/Users/cmorley/Desktop/Development/Jars/mysql-connector-java-5.0.8-bin.jar"/>
-	<classpathentry kind="lib" path="C:/Users/cmorley/Desktop/Development/Jars/json-simple-1.1.1.jar"/>
-	<classpathentry kind="lib" path="C:/Users/cmorley/Desktop/Development/Jars/org.json.jar"/>
+	<classpathentry kind="lib" path="Res/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="Res/quartz-2.2.2.jar"/>
+	<classpathentry kind="lib" path="Res/quartz-jobs-2.2.2.jar"/>
+	<classpathentry kind="lib" path="Res/slf4j-api-1.7.7.jar"/>
+	<classpathentry kind="lib" path="Res/slf4j-log4j12-1.7.7.jar"/>
+	<classpathentry kind="lib" path="Res/geneos-openaccess-xpath-2.0.1.jar"/>
+	<classpathentry kind="lib" path="Res/json-simple-1.1.1.jar"/>
+	<classpathentry kind="lib" path="Res/org.json.jar"/>
+	<classpathentry kind="lib" path="Res/geneos-openaccess-util-2.0.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
