@@ -3,7 +3,6 @@
 *.csv
 
 # Package Files #
-*.jar
 *.war
 *.ear
 
