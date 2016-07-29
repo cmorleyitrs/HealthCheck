@@ -15,6 +15,13 @@ import org.xml.sax.SAXException;
 import handlers.MainAutoCheck;
 import objects.GatewaySetupFile;
 
+/*
+* Create by: 	Connor Morley
+* Date: 		July 2016
+* Title: 		HealthChecker
+* Version:		0.9
+*/
+
 public class FileReaderWriter {
 
 	public static void readSetupFile(String gwSetupFile) {

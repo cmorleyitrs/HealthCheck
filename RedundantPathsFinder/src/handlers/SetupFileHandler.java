@@ -17,9 +17,9 @@ import java.util.Properties;
 
 /*
 * Create by: 	Connor Morley
-* Date: 		April 2016
-* Title: 		Error Scraper Application
-* Version:		1.5
+* Date: 		July 2016
+* Title: 		HealthChecker
+* Version:		0.9
 */
 
 public class SetupFileHandler {

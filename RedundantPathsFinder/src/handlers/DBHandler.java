@@ -9,7 +9,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-
+/*
+* Create by: 	Connor Morley
+* Date: 		July 2016
+* Title: 		HealthChecker
+* Version:		0.9
+*/
 
 public class DBHandler {
 

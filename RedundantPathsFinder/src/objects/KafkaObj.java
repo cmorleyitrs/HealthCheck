@@ -3,6 +3,13 @@ import java.util.ArrayList;
 
 import handlers.DBHandler;
 
+/*
+* Create by: 	Connor Morley
+* Date: 		July 2016
+* Title: 		HealthChecker
+* Version:		0.9
+*/
+
 public class KafkaObj {
 	
 	private final ArrayList<String> xpaths;

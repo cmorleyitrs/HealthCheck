@@ -20,6 +20,12 @@ import org.xml.sax.SAXException;
 import handlers.MainAutoCheck;
 import handlers.SourceFile;
 
+/*
+* Create by: 	Milka
+* Date: 		
+* Title: 		HealthChecker
+* Version:		0.9
+*/
 
 public class GatewaySetupFile extends SourceFile {
 

@@ -22,6 +22,13 @@ import com.itrsgroup.openaccess.xpath.XPathBuilder;
 import handlers.DBHandler;
 import handlers.MainAutoCheck;
 
+/*
+* Create by: 	Connor Morley
+* Date: 		July 2016
+* Title: 		HealthChecker
+* Version:		0.9
+*/
+
 public class KafkaThread {
 	
 	public static String topics = "geneos-metadata.severity";

@@ -21,6 +21,12 @@ import com.itrsgroup.openaccess.OpenAccess;
 
 import objects.GatewaySetupFile;
 
+/*
+* Create by: 	Connor Morley
+* Date: 		July 2016
+* Title: 		HealthChecker
+* Version:		0.9
+*/
 
 
 public class MainAutoCheck {

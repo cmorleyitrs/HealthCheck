@@ -3,6 +3,13 @@ import java.util.Comparator;
 
 import objects.Path;
 
+/*
+* Create by: 	Connor Morley
+* Date: 		July 2016
+* Title: 		HealthChecker
+* Version:		0.9
+*/
+
 public class CustomComparator implements Comparator<Path>{
 
 	@Override

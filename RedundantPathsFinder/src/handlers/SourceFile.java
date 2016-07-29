@@ -9,6 +9,13 @@ import org.w3c.dom.NodeList;
 import objects.IncludeFile;
 import objects.Path;
 
+/*
+* Create by: 	Connor Morley
+* Date: 		July 2016
+* Title: 		HealthChecker
+* Version:		0.9
+*/
+
 public class SourceFile {
 
 	protected ArrayList<Path> paths;

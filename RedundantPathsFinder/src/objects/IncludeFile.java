@@ -6,6 +6,13 @@ import org.w3c.dom.Node;
 
 import handlers.SourceFile;
 
+/*
+* Create by: 	Milka
+* Date: 		
+* Title: 		HealthChecker
+* Version:		0.9
+*/
+
 public class IncludeFile extends SourceFile {
 
 	private String locationInGSE;
