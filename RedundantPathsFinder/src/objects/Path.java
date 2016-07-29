@@ -1,6 +1,11 @@
+package objects;
 import java.sql.SQLException;
 
 import org.w3c.dom.Node;
+
+import handlers.DBHandler;
+import handlers.MainAutoCheck;
+import handlers.SourceFile;
 
 public class Path {
 
@@ -146,7 +151,7 @@ public class Path {
 		return false;
 	}
 
-	static void addPath(Node node, SourceFile g) throws SQLException {
+	public static void addPath(Node node, SourceFile g) throws SQLException {
 		Path newPath = new Path(node, g, SourceFile.findParentsAndDisabled(
 				node, ""));
 		if (node.getTextContent().startsWith("/")) { // if it's an absolute path

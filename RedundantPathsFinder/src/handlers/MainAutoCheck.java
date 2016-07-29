@@ -1,3 +1,4 @@
+package handlers;
 import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
@@ -18,14 +19,17 @@ import org.slf4j.LoggerFactory;
 import com.itrsgroup.openaccess.Connection;
 import com.itrsgroup.openaccess.OpenAccess;
 
+import fileProcessing.SetupFileHandler;
+import objects.GatewaySetupFile;
+
 
 
 public class MainAutoCheck {
 
-	static Logger log = LoggerFactory.getLogger(MainAutoCheck.class);
+	public static Logger log = LoggerFactory.getLogger(MainAutoCheck.class);
 
 	//static String clusterURL;
-	static String gwXMLpath;
+	public static String gwXMLpath;
 	//static int repeatInterval;
 	//static int sleepInterval;
 	
@@ -40,12 +44,14 @@ public class MainAutoCheck {
 	//static Connection conn;
 
 	static Calendar cal;
-	static DateFormat dateFormat;
-	static Date firstRun, finalRun;
+	public static DateFormat dateFormat;
+	public static Date firstRun;
 
-	static GatewaySetupFile gatewaySetupFile; // initialised every new run
+	public static Date finalRun;
 
-	final static ArrayList<String> allPaths = new ArrayList<String>(); // all unique paths (path = location+xpath) found in the setup so far (gateway.setup.file + include files) - contains paths from all previous runs since the start of the program
+	public static GatewaySetupFile gatewaySetupFile; // initialised every new run
+
+	public final static ArrayList<String> allPaths = new ArrayList<String>(); // all unique paths (path = location+xpath) found in the setup so far (gateway.setup.file + include files) - contains paths from all previous runs since the start of the program
 
 	public static void main(String[] args) throws InterruptedException, IOException {
 

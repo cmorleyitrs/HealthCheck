@@ -1,4 +1,7 @@
+package objects;
 import java.util.ArrayList;
+
+import handlers.DBHandler;
 
 public class KafkaObj {
 	

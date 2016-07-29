@@ -1,3 +1,4 @@
+package objects;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,6 +16,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import handlers.MainAutoCheck;
+import handlers.SourceFile;
 
 
 public class GatewaySetupFile extends SourceFile {
@@ -47,7 +51,7 @@ public class GatewaySetupFile extends SourceFile {
 		return doc;
 	}
 
-	static String findIncludeFiles(GatewaySetupFile g){
+	public static String findIncludeFiles(GatewaySetupFile g){
 
 		int includesFoundInSetup = 0;
 		int includesReallyFound = 0;

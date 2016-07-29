@@ -1,3 +1,4 @@
+package fileProcessing;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -10,6 +11,9 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
+
+import handlers.MainAutoCheck;
+import objects.GatewaySetupFile;
 
 public class FileReaderWriter {
 

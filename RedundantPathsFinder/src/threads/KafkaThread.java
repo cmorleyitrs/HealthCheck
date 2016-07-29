@@ -1,3 +1,4 @@
+package threads;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,6 +18,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.itrsgroup.openaccess.xpath.XPathBuilder;
+
+import handlers.DBHandler;
+import handlers.MainAutoCheck;
 
 public class KafkaThread {
 	

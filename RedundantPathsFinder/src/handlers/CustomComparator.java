@@ -1,4 +1,7 @@
+package handlers;
 import java.util.Comparator;
+
+import objects.Path;
 
 public class CustomComparator implements Comparator<Path>{
 

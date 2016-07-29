@@ -1,3 +1,4 @@
+package fileProcessing;
 
 
 import java.io.File;
@@ -8,6 +9,10 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+
+import handlers.MainAutoCheck;
+import threads.KafkaThread;
+
 import java.util.Properties;
 
 

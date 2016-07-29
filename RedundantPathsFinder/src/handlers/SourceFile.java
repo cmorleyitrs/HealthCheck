@@ -1,9 +1,13 @@
+package handlers;
 import java.util.ArrayList;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import objects.IncludeFile;
+import objects.Path;
 
 public class SourceFile {
 
@@ -62,7 +66,7 @@ public class SourceFile {
 		}
 	}
 
-	static String findParentsAndDisabled(Node node, String xpath) {
+	public static String findParentsAndDisabled(Node node, String xpath) {
 		if (node.getParentNode() == null) {
 			return xpath;
 		}
@@ -81,7 +85,7 @@ public class SourceFile {
 		return findParentsAndDisabled(node, xpath);
 	}
 
-	static void findXpathsInIncludes() {
+	public static void findXpathsInIncludes() {
 		for (IncludeFile file : MainAutoCheck.gatewaySetupFile.getIncludes()) {
 			findXpaths(file); // find xpaths in each include file
 			MainAutoCheck.log.info("Path instances in " + file.getName()

@@ -1,7 +1,10 @@
+package objects;
 import java.util.ArrayList;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+
+import handlers.SourceFile;
 
 public class IncludeFile extends SourceFile {
 
