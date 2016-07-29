@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import com.itrsgroup.openaccess.Connection;
 import com.itrsgroup.openaccess.OpenAccess;
 
-import fileProcessing.SetupFileHandler;
 import objects.GatewaySetupFile;
 
 
