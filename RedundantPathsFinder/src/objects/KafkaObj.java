@@ -8,6 +8,9 @@ import handlers.DBHandler;
 * Date: 		July 2016
 * Title: 		HealthChecker
 * Version:		0.9
+* Description:	Object is used in conjunction with the kafka thread in order to store the xpath targets that are to be monitored.
+* 				As the external data of a thread must be final, the use of this object allows for easy disposal and recreation 
+* 				when a new thread is created/required.
 */
 
 public class KafkaObj {

@@ -12,31 +12,26 @@ import handlers.SourceFile;
 * Date: 		July 2016
 * Title: 		HealthChecker
 * Version:		0.9
+* Description: 	Adapted from original, the detected xpaths detected in the xml are checked against the associated DB then
+* 				depending on their existence are either updated or inserted into the DB for future reference. If an xpath
+* 				that exists in the DB is no longer found in the file the instance numbers will not match and this xpath
+* 				will be removed from the DB during cleanup.
 */
 
 public class Path {
 
 	private Node xpathNode;
-
 	private int maxMatchesSoFar = 0;
 	private int currentMatches = 0;
-
 	private boolean isValid;
-
 	private SourceFile sourceFile = null;
-
 	private String locationInFile;
-
-	private String uniqueIdentifier; // location (may have include) + path for
-
-	// the Toolkit view - should not contain
-	// any commas
+	private String uniqueIdentifier; 
 
 	public Path(Node xpathNode, SourceFile sourceFile, String locationInFile) {
 		this.xpathNode = xpathNode;
 		this.sourceFile = sourceFile;
 		this.locationInFile = locationInFile;
-
 		this.uniqueIdentifier = getLocation() + " XPath: "
 				+ getNode().getTextContent();
 	}
@@ -46,11 +41,9 @@ public class Path {
 			return false;
 		if (!(o instanceof Path))
 			return false;
-
 		Path other = (Path) o;
 		if (!this.uniqueIdentifier.equals(other.uniqueIdentifier))
 			return false;
-
 		return true;
 	}
 
@@ -97,15 +90,12 @@ public class Path {
 	}
 
 	public void addMatches(int i) {
-
 		this.currentMatches = i;
-
 		if (i > this.maxMatchesSoFar)
 			this.maxMatchesSoFar = i;
 	}
 
 	public void addCurrentMatches(int i) {
-
 		this.currentMatches = i;
 	}
 
@@ -125,23 +115,8 @@ public class Path {
 		return isValid;
 	}
 
-	
-//	  old isValidPath 
-//	  static boolean isValidPath(String p) { if (!p.equals("/")
-//	  && !p.equals("//") && !p.endsWith("/") && !p.contains("\n") &&
-//	  !p.isEmpty() && !p.matches("(.*)?\\/row(\\[[^/]*\\])?") &&
-//	  !p.matches("(.*)?\\/rows(\\[[^/]*\\])?") &&
-//	  !p.matches("(.*)?\\/gateway(\\[[^/]*\\])?") &&
-//	  !p.matches("(.*)?\\/geneos(\\[[^/]*\\])?") &&
-//	  !p.matches("(.*)?\\/headlines(\\[[^/]*\\])?")) return true; return false;
-//	  }
-	 
-
 	static boolean isValidPath(String p) {
-
-		// remove all spaces
 		p = p.replaceAll("\\s+", "");
-
 		if (!p.endsWith("/")
 				&& !p.contains("\n")
 				&& !p.isEmpty()
@@ -162,14 +137,12 @@ public class Path {
 		Path newPath = new Path(node, g, SourceFile.findParentsAndDisabled(
 				node, ""));
 		if (node.getTextContent().startsWith("/")) { // if it's an absolute path
-
 			if (!isValidPath(node.getTextContent())) {
 				MainAutoCheck.log.warn("Invalid absolute path: Location: "
 						+ newPath.getLocationToolkitOutput() + ", Path: "
 						+ node.getTextContent());
 				return;
 			}
-
 			if (newPath.getLocationToolkitOutput().contains("disabled\"true\"")) {
 				MainAutoCheck.log
 						.warn("Not adding XPath"
@@ -179,37 +152,25 @@ public class Path {
 				return;
 			}
 			g.addPath(newPath);
-
-			//if (!MainAutoCheck.allPaths.contains(newPath)) // Addition to DB is HERE!!!!!!
 			String path = newPath.uniqueIdentifier.substring(newPath.uniqueIdentifier.indexOf("XPath:") + 7); //Extract the xpath
 			int check = DBHandler.checkEntry(path);
-			
 			if(check == 1)	
-				//MainAutoCheck.allPaths.add(newPath);
 				DBHandler.updateEntry(path);
 				if(MainAutoCheck.initialRun == true)
 					MainAutoCheck.allPaths.add(path);
-				
 			if(check == 2)
 			{
 				MainAutoCheck.allPaths.add(path);
-				//System.out.println("SOMETHING IS HERE:    " + newPath.getNode().getTextContent());
 				MainAutoCheck.changeDetected = true;
 				DBHandler.addEntry(path, newPath.getNode().getTextContent()); // TextContent is xpath?????
 			}
-/*			if (!RepetitiveRun.currentUniquePaths.contains(newPath))
-				RepetitiveRun.currentUniquePaths.add(newPath);*/
 		} else {
-			// Main.log.debug("path doesn't start with \"/\" - doing nothing for now "+node.toString()+node.getTextContent());
 			if (!isValidPath(node.getTextContent())) {
 				MainAutoCheck.log.debug("Invalid path: Location: "
 						+ newPath.getLocationToolkitOutput() + ", Path: "
 						+ node.getTextContent());
 				return;
 			}
-			// TODO
-			// if it's a relative path
-			// do nothing for now...
 		}
 	}
 

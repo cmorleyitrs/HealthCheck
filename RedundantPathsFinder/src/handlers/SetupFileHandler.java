@@ -20,6 +20,8 @@ import java.util.Properties;
 * Date: 		July 2016
 * Title: 		HealthChecker
 * Version:		0.9
+* Description:	By reading an associated properties file the program is able to ascertain the kafka broker location and port
+* 				as well as the location of the gateway setup xml that is the target of the monitoring.
 */
 
 public class SetupFileHandler {

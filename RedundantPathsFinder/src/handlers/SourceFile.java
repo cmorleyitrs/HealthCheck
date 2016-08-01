@@ -14,6 +14,8 @@ import objects.Path;
 * Date: 		July 2016
 * Title: 		HealthChecker
 * Version:		0.9
+* Description:	Slight adaptation that includes a cleanup of the db when change is detected and the incremenation of the
+* 				cycle instance for reporting purposes. 
 */
 
 public class SourceFile {

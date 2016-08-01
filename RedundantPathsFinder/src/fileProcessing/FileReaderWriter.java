@@ -20,6 +20,8 @@ import objects.GatewaySetupFile;
 * Date: 		July 2016
 * Title: 		HealthChecker
 * Version:		0.9
+* Description:	Class used to read the gateway xml files and ready for examination. Also includes output message generation
+* 				which is no longer user. Consider removing.
 */
 
 public class FileReaderWriter {

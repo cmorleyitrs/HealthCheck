@@ -27,6 +27,9 @@ import handlers.MainAutoCheck;
 * Date: 		July 2016
 * Title: 		HealthChecker
 * Version:		0.9
+* Description:	Thread instance that executes the monitoring in line with the xpaths in the DB and the incoming kafka messages. 
+* 				By comparing all incoming kafka messages and parsing the resulting xpaths we can compare whether the target
+* 				identified within the xml result to an actual cell and how often this rule generates any form of result/hit/severity alteration.
 */
 
 public class KafkaThread {
@@ -81,16 +84,13 @@ public class KafkaThread {
 							updates.put(path, updates.get(path) + 1);
 						}
 					}
-					//System.out.println(record.toString()); //Default print of all throughput data, data is in JSON format.
 				} catch (Exception e) {
 					System.out.println(record.toString());
 					e.printStackTrace();
 				}
 			}
-			
 			DBHandler.updateHits(updates);
 		}}catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 			System.out.println("Internal interrupt HERE!!!!");
 			return 0;
@@ -175,35 +175,28 @@ public class KafkaThread {
 			sections.add(target.getString("dataview"));
 		if(data.get("name") != null)
 			sections.add(data.getString("name")); //Row name
-		
 		ArrayList<String> columns = new ArrayList<String>();
 		Iterator<?> keys = row.keys();
 		while(keys.hasNext()) //While there is another key to look at add it to the column list. 
 		{
 			columns.add((String)keys.next());
 		} 
-		
 		ArrayList<String> inherantPaths = new ArrayList<String>();
 		ArrayList<String> wilds = new ArrayList<String>();
-		wilds.add(XPathBuilder.xpath().gateway(sections.get(0)).probe(sections.get(1)).entity(sections.get(2)).view(sections.get(3)).get());
+		wilds.add(XPathBuilder.xpath().gateway(sections.get(0)).probe(sections.get(1)).entity(sections.get(2))
+				.view(sections.get(3)).get());
 		wilds.add(XPathBuilder.xpath().gateway(sections.get(0)).probe(sections.get(1)).entity(sections.get(2)).get());
 		wilds.add(XPathBuilder.xpath().gateway(sections.get(0)).probe(sections.get(1)).get());
 		wilds.add(XPathBuilder.xpath().gateway(sections.get(0)).get());
-
-		for(String wild : wilds)
-		{
-			if(!inherantPaths.contains(wild))
-				inherantPaths.add(XPathBuilder.xpath().gateway(sections.get(0)).probe(sections.get(1)).entity(sections.get(2)).view(sections.get(3)).get());
+		for (String wild : wilds) {
+			if (!inherantPaths.contains(wild))
+				inherantPaths.add(XPathBuilder.xpath().gateway(sections.get(0)).probe(sections.get(1))
+						.entity(sections.get(2)).view(sections.get(3)).get());
 		}
-		for(String col : columns)
-		{
-			inherantPaths.add(XPathBuilder.xpath().gateway(sections.get(0)).probe(sections.get(1)).entity(sections.get(2)).view(sections.get(3)).row(sections.get(4)).cell(col).get());
+		for (String col : columns) {
+			inherantPaths.add(XPathBuilder.xpath().gateway(sections.get(0)).probe(sections.get(1))
+					.entity(sections.get(2)).view(sections.get(3)).row(sections.get(4)).cell(col).get());
 		}
-		
-		// Cycle through the column results in the row object and then create xpaths for each resulting data item that result as part of the table information 
-			 
-			// THIS LEAVES A HOLE FOR THE ME AND DATAVIEW AND PROBE XPATHS IN THE REGISTER???????????
-		// code to check the parameters and then check against catallogued xpaths for result and if necessary increase in markers.
 		return inherantPaths;
 	}
 }

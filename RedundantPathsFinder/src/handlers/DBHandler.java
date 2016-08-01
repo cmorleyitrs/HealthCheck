@@ -14,6 +14,9 @@ import java.util.Random;
 * Date: 		July 2016
 * Title: 		HealthChecker
 * Version:		0.9
+* Description:	Database interface handling for communication with an associated MySQL database that is used as a store and
+* 				reference for monitored xpaths and the hits that are detected for them for future reporting/analysis. Controls
+* 				include checks, additions, updates, removals and cleanups.
 */
 
 public class DBHandler {
