@@ -21,7 +21,7 @@ import java.util.Random;
 
 public class DBHandler {
 
-	 private static String address = "jdbc:mysql://192.168.10.128/healthtest?user=root&password=iPods123";
+	 public static String address = "";
 	  private static Connection conn = null;
 	  private static Statement stmt = null;
 	  private static ResultSet res = null;

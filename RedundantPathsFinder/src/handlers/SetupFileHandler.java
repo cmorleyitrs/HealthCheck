@@ -31,7 +31,7 @@ public class SetupFileHandler {
 	public static void readSettingsFile() throws InterruptedException {
 		Properties prop = new Properties();
 		InputStream input = null;
-		int varCount = 3; // Default number of entries without maintenance roll back
+		int varCount = 8; // Default number of entries without maintenance roll back
 
 		try {
 			String file = "";
@@ -46,6 +46,11 @@ public class SetupFileHandler {
 			setting.put("kafkaAddress", prop.getProperty("kafka_host"));
 			setting.put("kafkaPort", prop.getProperty("kafka_port"));
 			setting.put("gatewayXmlLocation", prop.getProperty("xml_path"));
+			setting.put("dbHost", prop.getProperty("db_host"));
+			setting.put("dbPort", prop.getProperty("db_port"));
+			setting.put("dbName", prop.getProperty("db_name"));
+			setting.put("dbUsername", prop.getProperty("db_username"));
+			setting.put("dbPassword", prop.getProperty("db_password"));
 
 			if (setting.size() != varCount || setting.containsValue(null)) {
 				System.exit(0);
@@ -69,5 +74,8 @@ public class SetupFileHandler {
     {
 		KafkaThread.kafkaServer = setting.get("kafkaAddress") + ":" + setting.get("kafkaPort");
 		MainAutoCheck.gwXMLpath = setting.get("gatewayXmlLocation");
+		DBHandler.address = "jdbc:mysql://" + setting.get("dbHost") + ":" + setting.get("dbPort") + "/" + setting.get("dbName")
+		+ "?user=" + setting.get("dbUsername") + "&password=" + setting.get("dbPassword");
+		//jdbc:mysql://192.168.10.128/healthtest?user=root&password=iPods123
     }
 }

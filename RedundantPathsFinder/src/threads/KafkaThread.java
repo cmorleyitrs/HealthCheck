@@ -64,6 +64,7 @@ public class KafkaThread {
 				try {
 					JSONObject temp = new JSONObject(record.value()); //THERE ARE FOUR JSON OBJECTS IN ONE KAFKA MESSAGE!!!!
 					JSONObject data = temp.getJSONObject("data");
+					System.out.println(record);
 					ArrayList<String> inherantPaths = new ArrayList<String>();
 					if(data.has("name"))
 					{
@@ -100,6 +101,7 @@ public class KafkaThread {
 	
 	private static ArrayList<String> processSeverityMessage(ConsumerRecord<String, String> record, JSONObject data) throws JSONException, ParseException, InterruptException {
 		ArrayList<String> inherantPaths = new ArrayList<String>();
+		try{
 		ArrayList<String> sections = new ArrayList<String>();
 		JSONObject target = data.getJSONObject("target");
 		int params = 0;
@@ -155,8 +157,13 @@ public class KafkaThread {
 					.row(sections.get(6)).get());
 		if (params == 8)
 			inherantPaths.add(XPathBuilder.xpath().gateway(sections.get(0)).probe(sections.get(1))
-					.entity(sections.get(2)).sampler(sections.get(3), sections.get(4)).view(sections.get(5))
+				.entity(sections.get(2)).sampler(sections.get(3), sections.get(4)).view(sections.get(5))
 					.row(sections.get(6)).cell(sections.get(7)).get());
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	return inherantPaths;
 	}
 	
