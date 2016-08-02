@@ -40,19 +40,7 @@ public class KafkaThread {
 	
 	public static int runKafka(){
 		try{
-		Properties props = new Properties();
-		props.put("bootstrap.servers", kafkaServer);
-		props.put("group.id", groupID);
-		props.put("enable.auto.commit", "true");
-		props.put("auto.commit.interval.ms", "1000");
-		props.put("session.timeout.ms", "30000");
-		props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-		props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-		props.put("fetch.min.bytes", "50000");
-		props.put("receive.buffer.bytes", "262144");
-		props.put("max.partition.fetch.bytes", "2097152");
-		props.put("consumer.timeout.ms", "1");
-		props.put("auto.offset.reset", "earliest");
+		Properties props = setupProperties();
 		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props); //Kafka Consumer is defined with properties
 		String[] tList = topics.split(",");
 		consumer.subscribe(Arrays.asList(tList)); //Topics are assigned to the consumer so the brokers are aware of what data to provide
@@ -97,6 +85,23 @@ public class KafkaThread {
 			return 0;
 		}
 		
+	}
+
+	private static Properties setupProperties() {
+		Properties props = new Properties();
+		props.put("bootstrap.servers", kafkaServer);
+		props.put("group.id", groupID);
+		props.put("enable.auto.commit", "true");
+		props.put("auto.commit.interval.ms", "1000");
+		props.put("session.timeout.ms", "30000");
+		props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+		props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+		props.put("fetch.min.bytes", "50000");
+		props.put("receive.buffer.bytes", "262144");
+		props.put("max.partition.fetch.bytes", "2097152");
+		props.put("consumer.timeout.ms", "1");
+		props.put("auto.offset.reset", "earliest");
+		return props;
 	}
 	
 	private static ArrayList<String> processSeverityMessage(ConsumerRecord<String, String> record, JSONObject data) throws JSONException, ParseException, InterruptException {
