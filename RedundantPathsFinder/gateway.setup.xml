@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!--Edited using Gateway Setup Editor version GA3.4.0-160118 at 2016-07-29 11:01:15 by cmorley on ITRSLP043-->
+<!--Edited using Gateway Setup Editor version GA3.4.0-160118 at 2016-08-02 09:40:06 by cmorley on ITRSLP043-->
 <gateway compatibility="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://schema.itrsgroup.com/RAfeature-publishing3-160419/gateway.xsd">
 	<probes>
 		<probe name="New Probe">
 			<hostname>localhost</hostname>
 			<port>7036</port>
 		</probe>
+		<probe name="win">
+			<hostname>192.168.10.128</hostname>
+			<encodedPassword>uoRKKvKKWUN.k</encodedPassword>
+		</probe>
 	</probes>
 	<managedEntities>
-		<managedEntity name="New Managed entity">
-			<probe ref="New Probe"/>
-			<environment ref="New Environment"/>
-			<sampler ref="New Sampler"/>
-			<sampler ref="New Sampler 5"/>
-			<sampler ref="Kafka Rule Redundancy Check"/>
-		</managedEntity>
 		<managedEntity name="New Managed entity 1">
 			<probe ref="New Probe"/>
 			<environment ref="New Environment"/>
@@ -25,6 +22,14 @@
 			<sampler ref="realtick_checks"/>
 			<sampler ref="NT-Hardware"/>
 			<sampler ref="New Sampler 4"/>
+		</managedEntity>
+		<managedEntity name="New Managed entity">
+			<probe ref="New Probe"/>
+			<environment ref="New Environment"/>
+			<sampler ref="New Sampler"/>
+			<sampler ref="New Sampler 5"/>
+			<sampler ref="Kafka Rule Redundancy Check"/>
+			<sampler ref="New Sampler 7"/>
 		</managedEntity>
 	</managedEntities>
 	<types/>
@@ -608,6 +613,82 @@
 				</sql-toolkit>
 			</plugin>
 		</sampler>
+		<sampler name="VolckerFiles">
+			<var-group>
+				<data>CifraoFiles</data>
+			</var-group>
+			<sampleInterval>
+				<data>600</data>
+			</sampleInterval>
+			<plugin>
+				<ftm>
+					<files>
+						<file>
+							<path>
+								<data>E:\Apps\FTPROOT\DWH-LIS\Volcker\PBC_Portugal-Trades_&lt;today %Y%m%d&gt;.csv</data>
+							</path>
+							<expectedArrival>
+								<data>20:00</data>
+							</expectedArrival>
+							<expectedPeriod>
+								<daily/>
+							</expectedPeriod>
+							<monitoringPeriod>
+								<periodStartTime>
+									<data>20:00</data>
+								</periodStartTime>
+							</monitoringPeriod>
+							<alias>
+								<data>Volcker Files (PBC_Portugal-Trades)</data>
+							</alias>
+							<activePeriod>
+								<data>7200</data>
+							</activePeriod>
+						</file>
+						<file>
+							<path>
+								<data>E:\Apps\FTPROOT\DWH-LIS\Volcker\PBC_Portugal-Position_&lt;today %Y%m%d&gt;.csv</data>
+							</path>
+							<expectedArrival>
+								<data>20:00</data>
+							</expectedArrival>
+							<expectedPeriod>
+								<daily/>
+							</expectedPeriod>
+							<monitoringPeriod>
+								<periodStartTime>
+									<data>20:00</data>
+								</periodStartTime>
+							</monitoringPeriod>
+							<alias>
+								<data>Volcker Files (PBC_Portugal-Position)</data>
+							</alias>
+							<activePeriod>
+								<data>7200</data>
+							</activePeriod>
+						</file>
+					</files>
+					<monitoredDays>
+						<monday>true</monday>
+						<tuesday>true</tuesday>
+						<wednesday>true</wednesday>
+						<thursday>true</thursday>
+						<friday>true</friday>
+						<saturday>true</saturday>
+						<sunday>true</sunday>
+					</monitoredDays>
+					<showActualFilename>
+						<data>true</data>
+					</showActualFilename>
+					<delayUnit>MINUTES</delayUnit>
+				</ftm>
+			</plugin>
+		</sampler>
+		<sampler name="New Sampler 7">
+			<plugin>
+				<Gateway-gatewayData/>
+			</plugin>
+		</sampler>
 	</samplers>
 	<actions>
 		<throttle name="New Throttle">
@@ -637,7 +718,7 @@
 		</effect>
 	</effects>
 	<commands>
-		<command name="New Command">
+		<command name="New Command" disabled="true">
 			<targets>
 				<target>/geneos/gateway/directory</target>
 			</targets>
@@ -748,9 +829,83 @@
 				</args>
 			</userCommand>
 		</command>
+		<command name="View Gateway Logfile">
+			<targets>
+				<target>/geneos/gateway/directory</target>
+			</targets>
+			<userCommand>
+				<type>script</type>
+				<runLocation>gateway</runLocation>
+				<args>
+					<arg>
+						<userInput>
+							<description>Tail or Head</description>
+							<options>
+								<option>
+									<label>Tail</label>
+									<value>tail</value>
+								</option>
+								<option>
+									<label>Head</label>
+									<value>head</value>
+								</option>
+							</options>
+						</userInput>
+					</arg>
+					<arg>
+						<static>-</static>
+					</arg>
+					<arg>
+						<concatenate>true</concatenate>
+						<userInput>
+							<description>Number of Lines</description>
+							<integer>200</integer>
+						</userInput>
+					</arg>
+					<arg>
+						<xpath>//sampler[(param(&quot;PluginName&quot;)=&quot;Gateway-gatewayData&quot;)]/dataview/rows/row[(@name=&quot;gatewayLogFile&quot;)]/cell[(@column=&quot;value&quot;)]/@value</xpath>
+					</arg>
+				</args>
+			</userCommand>
+		</command>
+		<command name="Automonitor - Get-ExecutionPolicy">
+			<targets>
+				<target>/geneos/gateway/directory/probe[(param(&quot;SelfAnnounced&quot;)=&quot;true&quot;)]/managedEntity</target>
+			</targets>
+			<userCommand>
+				<type>script</type>
+				<runLocation>netprobe</runLocation>
+				<args>
+					<arg>
+						<static>PowerShell </static>
+					</arg>
+					<arg>
+						<static>-Command</static>
+					</arg>
+					<arg>
+						<static>Get-ExecutionPolicy</static>
+					</arg>
+				</args>
+			</userCommand>
+		</command>
+		<command name="PowerShellTest">
+			<targets>
+				<target>/geneos/gateway[(@name=&quot;Kafka&quot;)]/directory/probe[(@name=&quot;win&quot;)]</target>
+			</targets>
+			<userCommand>
+				<type>script</type>
+				<runLocation>netprobe</runLocation>
+				<args>
+					<arg>
+						<static>powershell.exe -executionpolicy bypass -file &quot;C:\Users\cmorley\Desktop\script.ps1&quot;</static>
+					</arg>
+				</args>
+				<enablePassword>true</enablePassword>
+			</userCommand>
+		</command>
 	</commands>
 	<scheduledCommands>
-		<scheduledCommand name="New Scheduled command">
+		<scheduledCommand name="New Scheduled command" disabled="true">
 			<command>
 				<command ref="New Command"/>
 			</command>
@@ -1380,7 +1535,7 @@ elseif $(envName) like "DBAPRD EST" and $(jobName) like "FZMAINC1" and value = "
 				</if>
 			</block>
 		</rule>
-		<rule name="New Rule 5" disabled="true">
+		<rule disabled="true" name="New Rule 5">
 			<targets>
 				<target>/geneos/gateway[(@name=&quot;Kafka&quot;)]/directory/probe[(@name=&quot;New Probe&quot;)]/managedEntity[(@name=&quot;New Managed entity 1&quot;)]/sampler[(@name=&quot;New Sampler 1&quot;)][(@type=&quot;&quot;)]/dataview[(@name=&quot;New Sampler 1&quot;)]/rows/row[(@name=&quot;/boot&quot;)]/cell[(@column=&quot;percentageUsed&quot;)]</target>
 			</targets>
@@ -1416,6 +1571,11 @@ elseif $(envName) like "DBAPRD EST" and $(jobName) like "FZMAINC1" and value = "
 			</var>
 		</environment>
 	</environments>
+	<auditOutputs>
+		<auditOutput name="New Audit output">
+			<database/>
+		</auditOutput>
+	</auditOutputs>
 	<knowledgeBase>
 		<urlTemplate name="New URL template">
 			<urlTemplateElements>
