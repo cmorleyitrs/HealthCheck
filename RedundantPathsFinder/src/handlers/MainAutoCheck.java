@@ -35,7 +35,7 @@ public class MainAutoCheck {
 	public static String gwXMLpath;
 	public static boolean initialRun = true;
 	public static int runInstance = 0;
-	public static String gateway = "testingGateway";
+	public static String sqltime;
 	public static boolean changeDetected = false;
 	public static String filePath = "";
 	public static String fileName = "";
@@ -53,6 +53,7 @@ public class MainAutoCheck {
 		firstRun = cal.getTime();
 		cal.add(Calendar.SECOND, 99999);
 		finalRun = cal.getTime();
+		sqltime = dateFormat.format(new java.util.Date());
 		SetupFileHandler.readSettingsFile();
 		filePath = gwXMLpath;
 		System.out.println(filePath);

@@ -50,8 +50,8 @@ public static void addEntry(String entry, String xpath) throws SQLException {	//
 	SQLConnect();
 	try{
 	stmt = conn.createStatement();
-	stmt.executeUpdate("insert into paths (gateway, xpath, runinstance) values ('" + MainAutoCheck.gateway + "', '" + entry + "', " + MainAutoCheck.runInstance + ");" );
-} catch (SQLException e) {
+	stmt.executeQuery("call  sp_addentry('" + MainAutoCheck.sqltime + "', '" + entry + "', " + MainAutoCheck.runInstance + ");");
+	} catch (SQLException e) {
 	close();
 	e.printStackTrace();
 	throw new RuntimeException(e);
@@ -68,7 +68,7 @@ public static void updateEntry(String entry) throws SQLException {	//CREATE STOR
 	SQLConnect();
 	try{
 	stmt = conn.createStatement();
-	stmt.executeUpdate("update paths set runinstance="+ MainAutoCheck.runInstance +" where xpath like '" + entry + "';");
+	stmt.executeQuery("call sp_updateentry('" + entry + "', " + MainAutoCheck.runInstance + ");");
 } catch (SQLException e) {
 	close();
 	e.printStackTrace();
@@ -83,7 +83,7 @@ public static int checkRemovals() throws SQLException {	//CREATE STORED PROCEDUR
 	int result = 0;
 	try{
 	stmt = conn.createStatement();
-	res = stmt.executeQuery("select count(id) from paths where runinstance <> " + MainAutoCheck.runInstance + ";");
+	res = stmt.executeQuery("call sp_checkremov(" + MainAutoCheck.runInstance + ");");
 	while(res.next())
 	{
 		result = res.getInt(1);
@@ -101,7 +101,7 @@ public static void cleanUp() throws SQLException {	//CREATE STORED PROCEDURE
 	SQLConnect();
 	try{
 	stmt = conn.createStatement();
-	stmt.executeQuery("call sp_cleanup("+ MainAutoCheck.runInstance + ", '"+ MainAutoCheck.gateway + "');");
+	stmt.executeQuery("call sp_cleanup("+ MainAutoCheck.runInstance + ", '"+ MainAutoCheck.sqltime + "');");
 } catch (SQLException e) {
 	close();
 	e.printStackTrace();
@@ -117,8 +117,7 @@ public static int checkEntry(String entry) {
 	int result;
 	try {
 		stmt = conn.createStatement();
-		res = stmt
-				.executeQuery("select id from paths where xpath like '" + entry + "';");
+		res = stmt.executeQuery("call sp_checkentry('"+ entry + "', '"+ MainAutoCheck.sqltime + "');");	
 		if (!res.isBeforeFirst()) 
 		{
 			result = 2;
@@ -142,7 +141,7 @@ public static ArrayList<String> getCurrentXpaths(){
 	ArrayList<String> result = new ArrayList<String>();
 	try{
 	stmt = conn.createStatement();
-	res = stmt.executeQuery("select xpath from paths where gateway like '" + MainAutoCheck.gateway + "';");
+	res = stmt.executeQuery("call sp_getXpaths('"+ MainAutoCheck.sqltime + "');");
 	while(res.next())
 	{
 		result.add(res.getString(1));
