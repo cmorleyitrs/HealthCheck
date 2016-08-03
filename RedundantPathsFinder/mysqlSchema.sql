@@ -1,3 +1,5 @@
+-- Version 1.0
+
 create table paths(
 id int not null auto_increment,
 appinstance varchar(250),
