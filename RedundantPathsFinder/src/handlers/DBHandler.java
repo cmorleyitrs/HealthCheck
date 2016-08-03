@@ -161,7 +161,7 @@ public static void updateHits(Map<String, Integer> updates){
 	stmt = conn.createStatement();
 	for(Map.Entry<String,Integer> entry : updates.entrySet())
 	{
-		stmt.addBatch("call sp_updatehits('" + entry.getKey() + "' , " + entry.getValue() + ");");
+		stmt.addBatch("call sp_updatehits('" + entry.getKey() + "' , " + entry.getValue() + " , '" + MainAutoCheck.sqltime + "');");
 	}
 	stmt.executeBatch();
 } catch (SQLException e) {

@@ -56,8 +56,6 @@ delimiter ;
 Delimiter $$
 create procedure sp_updatehits(in path varchar(500), in addition int)
 BEGIN
-declare pathid int  default (select id from paths where xpath like path);
-declare currenthits int default (select hitcount from hits where id like pathid);
-insert into hits(id, hitcount) values(pathid, 1) on duplicate key update hitcount=(currenthits + addition);
+insert into hits(id, hitcount) select id, 1 from paths where xpath like path and appinstance like apptime on duplicate key update hitcount = (select h.hitcount + addition from hits as h join paths as p on h.id = p.id where p.xpath like path and p.appinstance like apptime);
 END $$
 delimiter ;
